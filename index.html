@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Master App - Advanced Reading Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-header { background: rgba(79, 70, 229, 0.95); backdrop-filter: blur(8px); }
+
+        /* Grammar Highlight Interactive Styles */
+        .grammar-item {
+            transition: all 0.2s ease;
+            border-radius: 0.25rem;
+            padding: 0 0.125rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        /* Verbs (動詞の語法) - Blue */
+        .hl-verbs { background-color: transparent; }
+        .hl-verbs.active { background-color: #DBEAFE; color: #1E3A8A; border-bottom: 2px solid #3B82F6; cursor: pointer; }
+        .hl-verbs.active:hover { background-color: #BFDBFE; }
+
+        /* Idioms (イディオム) - Amber */
+        .hl-idioms { background-color: transparent; }
+        .hl-idioms.active { background-color: #FEF3C7; color: #78350F; border-bottom: 2px solid #F59E0B; cursor: pointer; }
+        .hl-idioms.active:hover { background-color: #FDE68A; }
+
+        /* Comparisons (比較) - Emerald */
+        .hl-comparisons { background-color: transparent; }
+        .hl-comparisons.active { background-color: #D1FAE5; color: #064E3B; border-bottom: 2px solid #10B981; cursor: pointer; }
+        .hl-comparisons.active:hover { background-color: #A7F3D0; }
+        
+        /* Modifiers (代名詞・形容副詞) - Teal */
+        .hl-modifiers { background-color: transparent; }
+        .hl-modifiers.active { background-color: #CCFBF1; color: #115E59; border-bottom: 2px solid #14B8A6; cursor: pointer; }
+        .hl-modifiers.active:hover { background-color: #99F6E4; }
+        
+        /* Slash Reading Styles */
+        .slash {
+            display: none;
+            color: #9CA3AF;
+            margin: 0 0.15rem;
+            user-select: none;
+            font-weight: 300;
+        }
+        .slash-mode-active .slash { display: inline; }
+
+        /* Translation Ruby Styles */
+        ruby {
+            ruby-align: left;
+            ruby-position: under;
+        }
+        rt.translation {
+            display: none;
+            color: #64748B;
+            font-size: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            user-select: none;
+        }
+        .translation-mode-active { line-height: 2.8 !important; }
+        .translation-mode-active rt.translation { display: block; }
+        .translation-mode-active .slash { margin-bottom: 1.2rem; vertical-align: top; }
+
+        /* Paraphrase Ruby Styles */
+        rt.paraphrase {
+            display: none;
+            color: #0284c7;
+            font-size: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            user-select: none;
+        }
+        .paraphrase-mode-active { line-height: 2.8 !important; }
+        .paraphrase-mode-active rt.paraphrase { display: block; }
+        .paraphrase-mode-active .slash { margin-bottom: 1.2rem; vertical-align: top; }
+        
+        /* Paragraph Indent */
+        .passage-container p { text-indent: 1.5rem; }
+
+        /* TTS Highlight Styles */
+        .reading-highlight {
+            background-color: #FEF08A !important;
+            transition: background-color 0.2s;
+            border-radius: 0.25rem;
+            box-shadow: 0 0 0 4px #FEF08A;
+        }
+        .hover-reading-highlight {
+            background-color: #FEF9C3 !important;
+            transition: background-color 0.2s;
+            border-radius: 0.25rem;
+        }
+        .hover-readable { cursor: pointer; }
+
+        @media print {
+            @page { size: A4; margin: 10mm; }
+            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            header, aside, .print-hidden { display: none !important; }
+            .lg\:col-span-3 { grid-column: 1 / -1 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            #main-content-container { border: none !important; box-shadow: none !important; padding: 0 !important; min-height: auto !important; }
+            .passage-container { max-height: none !important; overflow: visible !important; border: none !important; background: transparent !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 11pt !important; line-height: 1.6 !important; box-shadow: none !important; }
+            #questions-container { page-break-before: always !important; break-before: page !important; }
+            .question-block { page-break-inside: avoid !important; break-inside: avoid !important; border: none !important; box-shadow: none !important; padding: 5px 0 !important; margin-bottom: 15px !important; }
+            .notes-section { page-break-before: always !important; break-before: page !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex flex-col min-h-screen pb-20">
+    <header class="glass-header text-white shadow-lg p-4 sticky top-0 z-30 border-b border-indigo-500 print:hidden">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div>
+                <h1 class="text-xl md:text-2xl font-black flex items-center gap-2 tracking-tight">
+                    <span class="bg-white text-indigo-700 p-1.5 rounded-lg leading-none shadow-sm">🚀</span> 
+                    English Master <span class="font-light text-indigo-200 text-lg hidden sm:inline">| Pre-1st Advanced Reading</span>
+                </h1>
+            </div>
+            <div class="text-xs bg-indigo-900/50 px-4 py-2 rounded-full border border-indigo-400/50 shadow-inner flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Active: <span id="header-active-title" class="font-bold text-white tracking-wide"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto w-full flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <aside class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3 h-fit lg:sticky lg:top-24 print:hidden">
+            <h2 class="text-[11px] font-black uppercase tracking-widest text-slate-400 px-2 flex items-center gap-1"><span class="text-indigo-400">#</span> Select Essay</h2>
+            <div id="sidebar-container" class="flex flex-col gap-1.5 max-h-[75vh] overflow-y-auto pr-2 pb-4">
+                <!-- Injected via JS -->
+            </div>
+        </aside>
+
+        <main class="lg:col-span-3 flex flex-col gap-6">
+            <div id="main-content-container" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-8 min-h-[60vh]">
+                <!-- Injected via JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Info Panel -->
+    <div id="info-panel" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-start gap-4 max-w-md w-11/12 border border-slate-700 transition-all duration-300 opacity-0 pointer-events-none translate-y-2 print-hidden">
+        <div class="flex-1">
+            <h3 id="info-title" class="font-bold text-lg mb-1"></h3>
+            <p id="info-desc" class="text-sm text-slate-300 leading-relaxed"></p>
+        </div>
+        <button id="close-panel" class="text-slate-400 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        const grammarDictionary = {
+            "feel soft": { detail: "feel は第2文型(SVC)を作る知覚動詞で、C(補語)には必ず「形容詞」が来ます。「柔らかく」につられて副詞 softly を選ばないように注意。", example: "This blanket feels extremely soft." },
+            "discuss the issue": { detail: "discuss は「〜について議論する」という意味の他動詞です。直後に about などの前置詞を置いてはいけません。", example: "We need to discuss the serious problem." },
+            "explain to 人 why": { detail: "explain は第4文型（explain 人 事）がとれない動詞です。必ず explain 事 to 人 または explain to 人 事 の形になります。", example: "He explained to me how the machine works." },
+            "do great harm": { detail: "do + 人/物 + harm で「〜に害を与える」。反対は do + 人/物 + good（〜のためになる）。", example: "Smoking does great harm to your lungs." },
+            "rob A of B": { detail: "「A(人・場所)からB(物)を奪う」。直後には被害者(A)が来ます。", example: "The thief robbed him of his wallet." },
+            "discourage A from V-ing": { detail: "「AがVするのを思いとどまらせる」。prevent A from V-ing と同じ文構造を作ります。", example: "The rain discouraged us from going out." },
+            "have O V-p.p.": { detail: "have + O + 過去分詞 で「OをVしてもらう（使役）」または「OをVされる（被害）」。", example: "I had my hair cut yesterday." },
+            "rise": { detail: "rise（上がる）は自動詞。raise（〜を上げる）は他動詞。区別が頻出です。", example: "The sun rises in the east. / Raise your hand." },
+            "remind A of B": { detail: "「AにBを思い出させる」。of は情報伝達を表します。", example: "This song reminds me of my childhood." },
+            "tell A from B": { detail: "「AとBを区別する、見分ける」。know A from B, distinguish A from B と同意です。", example: "It's hard to tell a fake from a genuine one." },
+            "lie in": { detail: "「〜に存在する」。lie（自動詞）と lay（他動詞）の区別に注意。", example: "The problem lies in our lack of communication." },
+            "fall short of": { detail: "「〜に達しない、及ばない」。期待や目標に届かない場合によく使われます。", example: "The results fell short of our expectations." },
+            "result in": { detail: "「〜という結果になる」。主語（原因）が目的語（結果）につながります。", example: "The heavy rain resulted in severe flooding." },
+            "turn out": { detail: "turn out (to be) 〜 で「〜であると判明する、〜という結果になる」。", example: "The rumor turned out to be true." },
+            "put up with": { detail: "「耐える、我慢する」。endure, tolerate, stand, bear と同義です。", example: "I can't put up with this noise anymore." },
+            "set about": { detail: "「〜に取り掛かる、着手する」。前置詞 about の後ろなので動名詞(V-ing)が来ます。", example: "She set about solving the complex problem." },
+            "succeed in": { detail: "succeed in V-ing で「〜に成功する」。succeed to 〜（〜を継承する）との違いに注意。", example: "He succeeded in passing the difficult exam." },
+            "have nothing to do with": { detail: "「〜と何の関係もない」。", example: "I have nothing to do with the incident." },
+            "lay off": { detail: "「〜を解雇する」。不況などの経済的理由による一時解雇を指すことが多いです。", example: "The factory had to lay off 100 workers." },
+            "give way to": { detail: "「〜に屈する、〜に道を譲る」。yield to, give in to と似た意味です。", example: "He refused to give way to fear." },
+            "make it a rule to": { detail: "「Vすることを規則（習慣）にしている」。", example: "I make it a rule to get up at 6 a.m." },
+            "call on": { detail: "「（人）を訪問する」。call at + 場所 と区別しましょう。", example: "I will call on him tomorrow." },
+            "take place": { detail: "「（行事などが）行われる、起こる」。自動詞句なので受動態にしません。", example: "The Olympics take place every four years." },
+            "come up with": { detail: "「（考えや解決策）を思いつく、提案する」。", example: "She came up with a brilliant idea." },
+            "take the place of": { detail: "「〜に取って代わる」。replace とほぼ同意です。", example: "Robots will take the place of humans." },
+            "make up for": { detail: "「〜を埋め合わせる、補う」。compensate for と同意です。", example: "I must work hard to make up for lost time." },
+            "apply for": { detail: "「〜に申し込む」。apply to 〜（〜に当てはまる）との違いに注意。", example: "He applied for a new job." },
+            "figure out": { detail: "「〜を理解する、解決する」。", example: "I can't figure out why she is crying." },
+            "deal with": { detail: "「〜に対処する、〜を扱う」。cope with, handle と同義です。", example: "How do you deal with stress?" },
+            "keep up with": { detail: "「（遅れずに）〜についていく」。", example: "It is hard to keep up with technological innovation." },
+            "get over": { detail: "「（困難や病気）を乗り越える、回復する」。overcome と同義です。", example: "It took him a long time to get over the shock." },
+            "take part in": { detail: "「〜に参加する」。participate in, join in と同意です。", example: "I will take part in the speech contest." },
+            "do away with": { detail: "「〜を廃止する、取り除く」。abolish, eliminate と同意です。", example: "We should do away with such outdated rules." },
+            "stand out": { detail: "「際立つ、目立つ」。", example: "Her red coat made her stand out." },
+            "cope with": { detail: "「（困難なこと）にうまく対処する」。", example: "He is unable to cope with the pressure." },
+            "keep in mind": { detail: "「〜を心に留める、覚えておく」。", example: "Keep in mind that safety comes first." },
+            "take it for granted": { detail: "take it for granted that... で「...ということを当然のことと思う」。", example: "I took it for granted that you would come." },
+            "run out of": { detail: "「〜を使い果たす、切らす」。", example: "We have run out of sugar." },
+            "go through with": { detail: "「（困難なこと）をやり遂げる、実行する」。", example: "He decided to go through with the surgery." },
+            "count on": { detail: "「〜を当てにする、頼りにする」。rely on, depend on と同義です。", example: "You can count on him to do a good job." },
+            "carry out": { detail: "「（計画、実験など）を実行する」。execute, perform と同義です。", example: "They carried out the experiment successfully." },
+            "major in": { detail: "「（大学で）〜を専攻する」。", example: "She majored in economics at college." },
+            "make sense": { detail: "「理にかなう、意味をなす」。", example: "What you're saying doesn't make sense." },
+            "make fun of": { detail: "「〜をからかう、笑いものにする」。", example: "It is cruel to make fun of others." },
+            "find fault with": { detail: "「〜のあら探しをする、非難する」。", example: "He is always finding fault with my work." },
+            "come of age": { detail: "「成人になる、十分に発達する」。", example: "The new technology has finally come of age." },
+            "look over": { detail: "「〜をざっと見る、見直す」。", example: "Please look over these documents." },
+            "keep in touch with": { detail: "「〜と連絡を取り合う」。", example: "Let's keep in touch with each other." },
+            "take advantage of": { detail: "「（機会）を利用する、（弱み）につけこむ」。", example: "You should take advantage of this opportunity." },
+            "break into": { detail: "「（建物や口座などに）不法侵入する」。", example: "Someone broke into my house last night." },
+            "break out": { detail: "「（戦争、火事などが）突然発生する」。", example: "World War II broke out in 1939." },
+            "wait on": { detail: "「（客）に応対する、給仕する」。serve と同義です。", example: "The clerk waited on us politely." },
+            "take into account": { detail: "「〜を考慮に入れる」。", example: "You must take his age into account." },
+            "get along with": { detail: "「（人）と仲良くやっていく」。", example: "She gets along well with her colleagues." },
+            "hand in": { detail: "「（宿題やレポートなど）を提出する」。", example: "Please hand in your report by Friday." },
+            "look up": { detail: "「（辞書やネットで言葉・情報）を調べる」。", example: "look it up in a dictionary." },
+            "account for": { detail: "「〜の割合を占める、〜の理由を説明する」。グラフ問題や長文の因果関係で超頻出。", example: "Lung cancer accounts for 25% of cancer mortality." },
+            "stand for": { detail: "「〜を表す、象徴する」。represent と同義です。略語の正式名称にも使われます。", example: "The colors stand for liberty and equality." },
+            "get rid of": { detail: "「〜を取り除く、処分する」。eliminate, remove と同義です。", example: "We need to get rid of the old furniture." },
+            "rule out": { detail: "「〜を除外する、否定する」。可能性を排除する際によく使われます。", example: "Police have not ruled out the possibility." },
+            "call off": { detail: "「〜を中止する」。cancel と同義です。put off（延期する）と混同注意。", example: "She had to call off the meeting." },
+            "come by": { detail: "「〜を手に入れる」。obtain と同義で、手に入れにくいものに使われます。", example: "It is difficult to come by that old video." },
+            "twice as much as": { detail: "倍数表現。「倍数 + as + 原級 + as」で「〜の〇倍…だ」。", example: "This room is twice as large as that one." },
+            "not so much A as B": { detail: "「AというよりむしろB」。Bの方に話者の重点が置かれます。", example: "He is not so much a scholar as a journalist." },
+            "The more... the more...": { detail: "「The 比較級 ..., the 比較級 ...」で「〜すればするほど、ますます…」。", example: "The older we grow, the poorer our memory becomes." },
+            "know better than to": { detail: "「〜するほど愚かではない（〜しないだけの分別がある）」。", example: "He knows better than to fight with his boss." },
+            "no less than": { detail: "「〜もの多くの」。数が予想以上に多いことを強調します。", example: "He won no less than 1 million dollars." },
+            "much less": { detail: "否定文に続いて「ましてや〜ない」。", example: "I can't speak English, much less French." },
+            "superior to": { detail: "「〜より優れている」。than ではなく to を用いる形容詞です。", example: "This machine is superior to the old one." },
+            "prefer A to B": { detail: "「BよりもAを好む」。こちらも to を使います。", example: "I prefer tea to coffee." },
+            "by far the most": { detail: "最上級の強調表現。「飛び抜けて最も〜だ」。", example: "This is by far the most difficult question." },
+            "all the better for": { detail: "「（理由があるからこそ）いっそう〜だ」。", example: "I like him all the better for his faults." },
+            "that of": { detail: "比較の対象を揃える代名詞。複数名詞なら those of を用います。", example: "His salary is higher than that of his wife." },
+            "an American friend of mine": { detail: "二重所有格。「私のアメリカ人の友人」。a my friend は不可。", example: "He is a good friend of mine." },
+            "every two years": { detail: "「2年ごとに」。every + 複数名詞 で周期を表します。", example: "The festival is held every four years." },
+            "hardly any": { detail: "「ほとんど〜ない（準否定）」。any と結びついて名詞を修飾します。", example: "I have hardly any money left." },
+            "lately": { detail: "「（ここ）最近」。現在完了形とともに用いられることが多い副詞です。", example: "Have you seen him lately?" },
+            "exhausting": { detail: "「（物事が）人を疲れさせる」。自分が疲れた場合は exhausted。", example: "The journey was extremely exhausting." },
+            "convenient for": { detail: "「（物事が）都合が良い」。人を主語にできません（You are convenient は不可）。", example: "This tool is very convenient for cooking." },
+            "capable of": { detail: "be capable of V-ing で「Vする能力がある」。", example: "He is capable of doing the job." },
+            "almost all of": { detail: "「〜のほとんどすべて」。almost は副詞なので名詞を直接修飾できません。", example: "Almost all of the students passed." },
+            "worth studying": { detail: "worth V-ing で「Vする価値がある」。", example: "This book is worth reading." },
+            "Quite a few": { detail: "「かなり多くの（数）」。数えられる名詞につきます。", example: "Quite a few people attended the meeting." },
+            "Most of": { detail: "「〜の大部分」。the などの限定語句が必要です。", example: "Most of my friends like soccer." },
+            "little": { detail: "「ほとんど〜ない」。不可算名詞につきます。a little（少しある）との違いに注意。", example: "He has little interest in politics." },
+            "others": { detail: "「他の人々/物」。Some 〜, while others ... の形で頻出します。", example: "Some like coffee, and others prefer tea." },
+            "exciting": { detail: "「（物事が）人をワクワクさせる」。自分が興奮した場合は excited。", example: "It was an exciting game." },
+            "by ourselves": { detail: "「私たち自身で、自力で」。", example: "We built this house by ourselves." },
+            "one": { detail: "不特定の単数名詞の反復を避ける代名詞。", example: "If you need a pen, I'll lend you one." },
+            "respectable": { detail: "「きちんとした、立派な」。respectful（敬意を表す）、respective（それぞれの）との違いに注意。", example: "He is a highly respectable gentleman." },
+            "sensible": { detail: "「分別のある、賢明な」。sensitive（敏感な）との違いが頻出です。", example: "It was a sensible decision." }
+        };
+
+        function getDictionaryEntry(word) {
+            let lookup = word.replace(/\s+/g, ' ').trim();
+            if (lookup.includes("rob") && lookup.includes("of")) return grammarDictionary["rob A of B"];
+            if (lookup.includes("explain") && lookup.includes("why")) return grammarDictionary["explain to 人 why"];
+            if (lookup.includes("discourage") && lookup.includes("from")) return grammarDictionary["discourage A from V-ing"];
+            if (lookup.includes("have") && (lookup.includes("installed") || lookup.includes("controlled") || lookup.includes("upgraded") || lookup.includes("managed") || lookup.includes("developed") || lookup.includes("fixed") || lookup.includes("analyzed") || lookup.includes("automated"))) return grammarDictionary["have O V-p.p."];
+            if (lookup.includes("twice as much")) return grammarDictionary["twice as much as"];
+            if (lookup.includes("than that of")) return grammarDictionary["that of"];
+            if (lookup.includes("remind") && lookup.includes("of")) return grammarDictionary["remind A of B"];
+            if (lookup.includes("tell") && lookup.includes("from")) return grammarDictionary["tell A from B"];
+            if (lookup.includes("do ") && lookup.includes("harm")) return grammarDictionary["do great harm"];
+            if (lookup.includes("friend of mine")) return grammarDictionary["an American friend of mine"];
+            if (lookup.includes("every two") || lookup.includes("every three") || lookup.includes("every few")) return grammarDictionary["every two years"];
+            if (lookup.includes("convenient for")) return grammarDictionary["convenient for"];
+            if (lookup.includes("worth ")) return grammarDictionary["worth studying"];
+            if (lookup.includes("hardly any") || lookup.includes("scarcely any")) return grammarDictionary["hardly any"];
+            if (lookup.includes("discuss the")) return grammarDictionary["discuss the issue"];
+            if (lookup.includes("one") && (lookup.includes("(s)") || lookup.includes("ones") || lookup === "one")) return grammarDictionary["one"];
+            if (lookup.includes("explain to")) return grammarDictionary["explain to 人 why"];
+            if (lookup.includes("sensitive")) return grammarDictionary["sensitive"];
+            if (lookup.includes("sensible")) return grammarDictionary["sensible"];
+            if (lookup.includes("respectable")) return grammarDictionary["respectable"];
+            if (lookup.includes("respectful")) return grammarDictionary["respectable"];
+            if (lookup.includes("respective")) return grammarDictionary["respectable"];
+            return grammarDictionary[lookup] || null;
+        }
+
+        const testData = [
+            {
+                id: 1, 
+                title: "Essay 1: Space Tourism and Commercial Exploration", 
+                level: "Pre-1st",
+                passage: `[Historically,|歴史的に見て、|In the past,] [space exploration|宇宙探査は|cosmos investigation] [has been heavily funded|多額の資金提供を受けてきた|has received massive funding] [by national governments.|国家政府によって。|by state authorities.] [However, lately,|しかし、最近、|Recently, though,] [economists|経済学者たちは|financial experts] [have warned|警告している|have cautioned] [that|（次のことを）|-] [this public funding model|この公的資金モデルが|this government spending system] [is reaching its limits.|限界に達しつつあると。|is approaching its max capacity.] [The budget|予算は|The financial plan] [required today|今日必要とされる|needed nowadays] [is much larger than that of|〜のそれよりもはるかに大きい|is significantly greater than that of] [the Apollo era,|アポロ時代の、|the early moon mission period,] [meaning|意味している（何を）|indicating] [private companies now account for|民間企業が現在〜の割合を占めていると|commercial firms currently make up] [a significant portion|かなりの部分の|a substantial part] [of space missions.|宇宙ミッションの。|of extra-terrestrial flights.] [Relying only on public money|公金のみに依存することは|Depending solely on state funds] [does great harm|大きな害を与える|causes severe damage] [to technological innovation|技術革新に|to tech advancement] [and gradually robs humanity of|そして徐々に人類から〜を奪う|and slowly deprives people of] [new discoveries.|新たな発見を。|fresh scientific findings.] [Scientists frequently discuss the issue|科学者たちは頻繁にその問題を議論する|Researchers regularly debate the topic] [at international summits,|国際サミットで、|at global meetings,] [and they have clearly explained|そして彼らは明確に説明してきた|and they have plainly clarified] [to the public why|なぜ〜かを大衆に|to citizens the reason] [commercializing|商業化することが（何を）|privatizing] [space travel|宇宙旅行を|cosmos journeys] [is absolutely crucial.|絶対に不可欠であるかを。|is completely essential.] [If governments ignore|もし政府が無視すれば|Should administrations overlook] [this shifting paradigm,|この移行しつつあるパラダイムを、|this changing model,] [their space programs|彼らの宇宙プログラムは|their cosmos projects] [will undoubtedly fall short of|間違いなく〜に達しないだろう|will certainly fail to meet] [international milestones|国際的なマイルストーンに|global achievements] [and inevitably result in|そして必然的に〜という結果になるだろう|and unavoidably lead to] [a severe loss|深刻な喪失に|a serious drop] [of global influence.|世界的影響力の。|of international power.] [The situation has become so critical that|状況は非常に危機的になっているため|The state of affairs is now so urgent that] [experts argue|専門家たちは主張している|specialists contend] [we can no longer put up with|私たちはもはや〜を我慢することはできないと|we can not tolerate anymore] [inefficient government monopolies.|非効率な政府の独占を。|wasteful state single-control.]
+
+[Developing|開発することは（何を）|Creating] [a commercial spacecraft|商業用宇宙船を|a private rocket] [is undeniably an exhausting endeavor.|間違いなく人を疲れさせる試みである。|is definitely a tiring task.] [James,|ジェームズは、|James,] [an American friend of mine|私のアメリカ人の友人である|my friend from the US] [who majored in aerospace engineering,|航空宇宙工学を専攻した、|who specialized in rocket science,] [points out|指摘している|indicates] [that|（次のことを）|-] [currently,|現在、|at present,] [no less than sixty percent|60%もの多くの|as much as 60%] [of new rocket launches|新しいロケット打ち上げの|of fresh spacecraft take-offs] [are conducted|行われていると|are carried out] [by private startups.|民間のスタートアップによって。|by private new companies.] [He explains|彼は説明する|He details] [that|（次のことを）|-] [this space race|この宇宙開発競争は|this cosmos competition] [is not so much a scientific quest as|科学的な探求というよりはむしろ|is less a research mission than] [a highly profitable business strategy.|非常に収益性の高いビジネス戦略であると。|a very money-making corporate plan.] [The more companies try to keep up with|企業が〜についていこうとすればするほど|As businesses attempt to stay updated with] [the demand for satellite networks,|衛星ネットワークの需要に、|the need for orbital communication systems,] [the more they depend on|ますます彼らは〜に依存する|they increasingly rely on] [reusable rocket technology.|再利用可能なロケット技術に。|recyclable spacecraft tech.] [Unsympathetic traditionalists|冷淡な伝統主義者たちは|Uncaring old-fashioned thinkers] [sometimes make fun of|時折〜をからかう|occasionally mock] [space tourism,|宇宙旅行を、|cosmos sightseeing,] [claiming|主張しながら（何を）|asserting] [that|（次のことを）|-] [sending billionaires into orbit|億万長者を軌道に送り込むことは|launching wealthy people into space] [has nothing to do with|〜と何の関係もないと|is completely unrelated to] [real human progress.|真の人類の進歩とは。|actual people's advancement.] [These critics eagerly find fault with|これらの批判者たちは熱心に〜のあら探しをする|These reviewers passionately criticize] [governments|政府の|national authorities] [that provide tax breaks|税制上の優遇措置を提供する|which offer financial incentives] [to space corporations,|宇宙企業に、|to cosmos companies,] [and they actively try to discourage investors from|そして彼らは積極的に投資家が〜するのを思いとどまらせようとする|and they energetically attempt to deter backers from] [funding|資金を提供することを（何に）|financing] [these ventures.|これらのベンチャーに。|these projects.] [They argue|彼らは主張する|They state] [that|（次のことを）|-] [anyone with sensible financial logic|分別のある財務論理を持つ人なら誰でも|any person with practical money reasoning] [should know better than to|〜するほど愚かではないはずだと|ought to be wise enough not to] [waste|浪費する（何を）|squander] [billions|数十億ドルを|massive amounts of money] [on joyrides,|遊びのドライブに、|on fun trips,] [predicting|予測しながら（何を）|forecasting] [that|（次のことを）|-] [these startups will soon run out of|これらのスタートアップはすぐに〜を使い果たすだろうと|these new firms will shortly exhaust their] [funds|資金を|money] [and be forced to rule out|そして〜を除外せざるを得なくなるだろうと|and have no choice but to eliminate] [further explorations.|さらなる探査を。|additional investigations.]
+
+[Despite this widespread skepticism,|この広範な懐疑論にもかかわらず、|In spite of this common doubt,] [passionate aerospace CEOs|情熱的な航空宇宙のCEOたちは|enthusiastic rocket company heads] [refuse to give way to pessimism.|悲観論に道を譲ることを拒否している。|decline to yield to negative thinking.] [They have set about|彼らは〜に取りかかっている|They have begun] [designing|設計することに（何を）|planning] [cheaper orbital habitats|より安価な軌道上の居住地を|less expensive space living areas] [to ensure|確保するために（何を）|to guarantee] [long-term human survival.|長期的な人類の生存を。|extended people's existence.] [To make up for|〜を埋め合わせるために|To compensate for] [the immense costs|莫大なコストを|the massive expenses] [of fuel,|燃料の、|of rocket energy,] [companies carry out|企業は〜を実行する|businesses implement] [extensive materials research|広範な材料研究を|widespread physical substance study] [that completely does away with|（それは）〜を完全に廃止する|which entirely eliminates] [the need for single-use rocket boosters.|使い捨てのロケットブースターの必要性を。|the requirement for throwaway launch engines.] [Initially,|当初は、|At first,] [hardly any conservative investors|保守的な投資家はほとんど〜なかった|almost no traditional backers] [wanted to take part in|参加したがら|desired to participate in] [these risky projects,|これらのリスクの高いプロジェクトに、|these dangerous initiatives,] [and scarcely anyone believed|そして信じる人はほとんどいなかった|and very few people thought] [these companies could successfully get over|これらの企業がうまく乗り越えられると|these firms could effectively overcome] [the technical hurdles|技術的なハードルを|the engineering obstacles] [of atmospheric reentry.|大気圏再突入の。|of returning to Earth's air.] [However,|しかしながら、|Yet,] [visionary leaders applied for|先見の明のあるリーダーたちは〜に申し込んだ|forward-thinking directors requested] [commercial payload contracts|商業的なペイロードの契約に|private cargo transport agreements] [and had advanced flight software developed|そして高度な飛行ソフトウェアを開発してもらった|and got sophisticated trajectory programs created] [to streamline|合理化するために（何を）|to simplify] [launches.|打ち上げを。|take-offs.] [These modern digital tools|これらの現代のデジタルツールは|These contemporary computer programs] [are highly convenient for flight controllers.|飛行管制官にとって非常に都合が良い。|are very useful for mission directors.] [The software makes it a rule to|そのソフトウェアは〜することを規則にしている|The program is designed to always] [analyze|分析する（何を）|examine] [weather data|気象データを|climate information] [once every two hours,|2時間ごとに、|every 120 minutes,] [predicting|予測しながら（何を）|forecasting] [wind shifts|風の変化を|breeze changes] [with incredible accuracy.|信じられないほどの正確さで。|with amazing precision.] [Because of this,|このため、|Due to this,] [almost all of the automated rockets|自動化されたロケットのほとんどすべてが|nearly every computerized spacecraft] [quickly figure out how to|すぐに〜する方法を理解する|rapidly learn the way to] [land|着陸する|touch down] [safely.|安全に。|securely.] [Now,|今では、|Currently,] [quite a few engineers|かなり多くのエンジニアが|many technicians] [can easily tell|簡単に見分けることができる|can readily distinguish] [a highly efficient reusable booster from|高効率の再利用可能なブースターを〜と|a very effective recyclable engine from] [a conventional disposable one.|従来の使い捨てのもの。|a traditional throwaway unit.]
+
+[We cannot take it for granted that|私たちは〜ということを当然のことと思ってはいけない|We must not assume that] [humanity will forever remain confined|人類が永遠に閉じ込められたままである|people will always stay restricted] [to a single planet.|単一の惑星に。|to one world.] [As advanced propulsion technology|高度な推進技術が|Because sophisticated pushing-forward tech] [has finally come of age,|ついに十分に発達したので、|has at last fully developed,] [we must go through with|私たちは〜をやり遂げなければならない|we need to complete the process of] [integrating|統合することを（何を）|incorporating] [space infrastructure|宇宙インフラを|cosmos public works] [into our global economy.|グローバル経済に。|into our worldwide financial network.] [The true value|真の価値は|The real worth] [of commercial spaceflight|商業宇宙飛行の|of private cosmos travel] [lies in|〜に存在する|is found in] [its potential to harvest asteroid resources,|小惑星の資源を収穫するその可能性に、|its capability to gather space rock materials,] [and experiencing|そして経験することは（何を）|and going through] [an abundant supply of rare metals|レアメタルの豊富な供給を|a plentiful source of scarce minerals] [is far superior to|〜よりもはるかに優れている|is much better than] [fighting|争うこと|battling] [over Earth's depleted reserves.|地球の枯渇した埋蔵量をめぐって。|for the world's used-up supplies.] [Many modern economists|現代の多くの経済学者は|Numerous contemporary financial experts] [now prefer|現在〜を好む|currently favor] [active investment in space industries to|宇宙産業への積極的な投資を〜よりも|energetic funding for cosmos businesses over] [passive reliance|受動的な依存|inactive dependence] [on earthly mining.|地球上の鉱業への。|on dirt digging.] [Even though|〜であるにもかかわらず|Despite the fact that] [building|建設することは（何を）|constructing] [a lunar base|月面基地を|a moon station] [from scratch|ゼロから|from the very beginning] [often costs twice as much effort and capital as|しばしば〜の2倍の労力と資金がかかる|frequently requires double the work and money of] [exploring|探査することの（何を）|investigating] [the deep ocean,|深海を、|the bottom of the sea,] [it makes perfect sense|それは完全に理にかなっている|it is completely logical] [for the survival of our species.|私たちの種の生存のために。|for the living on of humanity.] [The newly engineered spacesuits|新しく設計された宇宙服は|The recently created astronaut clothing] [feel soft and flexible,|柔らかく柔軟に感じられる、|have a smooth and bendable texture,] [providing|提供しながら（何を）|supplying] [maximum protection.|最大限の保護を。|top-level safety.] [We can certainly count on|私たちは確かに頼ることができる|We can definitely rely upon] [the younger generation of scientists,|若い世代の科学者たちに、|the new group of researchers,] [who are highly capable of|彼らは〜する能力が非常に高い|who are extremely able to] [dealing with the extreme challenges|極端な課題に対処する|handle the severe difficulties] [of zero gravity|無重力の|of no weight] [while keeping|保ちながら（何をどう）|whilst maintaining] [their ambitious dreams alive.|彼らの野心的な夢を生き生きと。|their big hopes going strong.] [This cosmic expansion|この宇宙への拡張は|This cosmos growth] [stands out as|〜として際立っている|is prominent as] [by far the most inspiring technological leap|飛び抜けて最も感動的な技術的飛躍|easily the most encouraging tech jump] [of our century.|私たちの世紀の。|of this 100-year period.] [Ultimately,|最終的に、|In the end,] [our global society will be all the better for|私たちのグローバル社会は〜のおかげでいっそう良くなるだろう|our worldwide community will greatly improve by] [embracing|受け入れること（何を）|adopting] [this multi-planetary future,|この多惑星の未来を、|this many-world tomorrow,] [making the advancement|そして進歩させることは（なる）|causing the progress] [of space tourism|宇宙旅行の|of cosmos sightseeing] [an endeavor definitely worth pursuing.|間違いなく追求する価値のある試みに。|a project surely deserving of effort.]`,
+                questions: [
+                    { q: "According to the first paragraph, why is the public funding model for space exploration reaching its limits?", options: ["Because relying only on public money robs humanity of inefficient government monopolies.", "Because the budget required today is much larger than that of the Apollo era.", "Because commercializing space travel falls short of international milestones.", "Because space programs inevitably result in sudden disruptions of global influence."], answer: 1, explanation: "第1段落の中盤に「今日必要とされる予算はアポロ時代のそれよりもはるかに大きい（is much larger than that of the Apollo era）」ため、公的資金モデルが限界に達しつつあると書かれています。" },
+                    { q: "What do unsympathetic traditionalists claim about space tourism?", options: ["They argue that anyone with sensible financial logic should waste billions on joyrides.", "They predict that startups will soon run out of funds and set about further explorations.", "They claim that sending billionaires into orbit has nothing to do with real human progress.", "They eagerly find fault with reusable rocket technology and make fun of satellite networks."], answer: 2, explanation: "第2段落中盤で、伝統主義者たちは「億万長者を軌道に送り込むことは真の人類の進歩とは何の関係もない（has nothing to do with real human progress）」と主張し、宇宙旅行をからかっています。" },
+                    { q: "How did visionary leaders make up for the immense costs of rocket fuel?", options: ["By applying for commercial payload contracts and completely doing away with single-use rocket boosters.", "By discouraging investors from funding ventures that predict wind shifts with incredible accuracy.", "By making it a rule to analyze weather data once every two hours to figure out how to rule out explorations.", "By carrying out extensive materials research that tells a reusable booster from a conventional disposable one."], answer: 0, explanation: "第3段落の前半に「燃料の莫大なコストを埋め合わせるために（To make up for...）、使い捨てロケットブースターの必要性を完全に廃止する（does away with...）研究を実行している」とあり、その後「先見の明のあるリーダーたちは商業ペイロード契約に申し込んだ（applied for...）」と続いています。" },
+                    { q: "Why do modern economists prefer active investment in space industries to passive reliance on earthly mining?", options: ["Because building a lunar base often costs twice as much effort and capital as exploring the deep ocean.", "Because experiencing an abundant supply of rare metals is far superior to fighting over Earth's depleted reserves.", "Because human survival lies in its potential to take it for granted that humanity will forever remain confined.", "Because newly engineered spacesuits feel soft and flexible, providing maximum protection for the survival of our species."], answer: 1, explanation: "第4段落中盤で「レアメタルの豊富な供給を経験することは地球の枯渇した埋蔵量をめぐって争うよりもはるかに優れている（is far superior to...）」ため、「宇宙産業への積極的な投資を地球の鉱業への受動的な依存よりも好む（prefer A to B）」と説明されています。" },
+                    { q: "What is the author's final conclusion about cosmic expansion?", options: ["It stands out as the most inspiring technological leap, and our global society will be all the better for embracing this future.", "It is an exhausting endeavor that will undoubtedly fall short of public expectations and result in a severe loss of influence.", "It makes perfect sense only if scientists are highly capable of dealing with the hidden costs of zero gravity.", "It proves that conventional disposable rockets are definitely worth pursuing to keep local economies vibrant."], answer: 0, explanation: "最終段落の最後に「この宇宙への拡張は飛び抜けて最も感動的な技術的飛躍として際立っており（stands out as by far the most...）、グローバル社会はこの未来を受け入れることでいっそう良くなる（all the better for...）」とあります。" }
+                ],
+                notes: [
+                    { title: "STEP 08: 動詞の語法", items: ["discuss the issue: 問題を議論する", "explain to the public why: なぜ〜かを大衆に説明する", "do great harm: 大きな害を与える", "rob A of B: AからBを奪う", "discourage investors from V-ing: 投資家が〜するのを思いとどまらせる", "have software developed: ソフトウェアを開発してもらう", "tell A from B: AとBを区別する", "lie in: 〜に存在する", "feel soft: 柔らかく感じる"] },
+                    { title: "STEP 09: イディオム", items: ["fall short of: 〜に達しない", "result in: 〜という結果になる", "put up with: 〜を我慢する", "major in: 〜を専攻する", "keep up with: 〜についていく", "make fun of: 〜をからかう", "have nothing to do with: 〜と何の関係もない", "find fault with: 〜のあら探しをする", "run out of: 〜を使い果たす", "rule out: 〜を除外する", "give way to: 〜に屈する", "set about: 〜に取りかかる", "make up for: 〜を埋め合わせる", "carry out: 〜を実行する", "do away with: 〜を廃止する", "take part in: 〜に参加する", "get over: 〜を乗り越える", "apply for: 〜に申し込む", "make it a rule to: 〜することにしている", "figure out: 〜を理解する", "take it for granted: 〜を当然のことと思う", "come of age: 十分に発達する", "go through with: 〜をやり遂げる", "make sense: 理にかなう", "count on: 〜を頼る", "deal with: 〜に対処する", "stand out: 際立つ"] },
+                    { title: "STEP 11: 比較", items: ["larger than that of: 〜のそれよりも大きい", "not so much A as B: AというよりむしろB", "The more... the more...: 〜すればするほど、ますます〜", "no less than: 〜もの多くの", "know better than to: 〜するほど愚かではない", "superior to: 〜より優れている", "prefer A to B: BよりAを好む", "twice as much effort and capital as: 〜の2倍の労力と資金", "by far the most: 飛び抜けて最も〜", "all the better for: 〜のおかげでいっそう良い"] },
+                    { title: "STEP 12/13: 代名詞・形容副詞", items: ["lately: 最近", "an American friend of mine: 私のアメリカ人の友人", "exhausting: 人を疲れさせる", "sensible: 分別のある", "hardly any: ほとんど〜ない", "convenient for: 〜にとって都合が良い", "every two hours: 2時間ごとに", "almost all of: 〜のほとんどすべて", "quite a few: かなり多くの", "capable of: 〜する能力がある", "worth pursuing: 追求する価値がある"] }
+                ]
+            },
+            {
+                id: 2, 
+                title: "Essay 2: The Rise of Artificial Intelligence in Education", 
+                level: "Pre-1st",
+                passage: `[Historically,|歴史的に見て、|In the past,] [educational systems|教育システムは|schooling networks] [have relied heavily on|〜に大きく依存してきた|have depended a lot on] [human teachers|人間の教師と|human instructors] [and standardized testing.|そして標準化されたテストに。|and uniform exams.] [However, lately,|しかし、最近、|Recently, though,] [academic researchers|学術研究者たちは|scholarly investigators] [have warned|警告している|have cautioned] [that|（次のことを）|-] [this traditional classroom model|この伝統的な教室モデルが|this old-fashioned teaching setup] [is failing to engage|引き付けることに失敗しつつあると|is not succeeding in interesting] [modern students.|現代の生徒を。|contemporary learners.] [The volume of diverse learning needs|多様な学習ニーズの量は|The amount of different educational requirements] [identified today|今日特定される|recognized nowadays] [is much larger than that of|〜のそれよりもはるかに大きい|is significantly greater than that of] [the past century,|過去の世紀の、|the previous 100 years,] [meaning|意味している（何を）|indicating] [managing thirty students at once|一度に30人の生徒を管理することが|handling 30 learners at the same time] [now accounts for|現在〜の割合を占めていると|currently makes up] [a massive source|巨大な原因の|a huge origin] [of teacher burnout.|教師の燃え尽き症候群の。|of instructor extreme fatigue.] [Relying solely on one-size-fits-all lessons|画一的な授業のみに依存することは|Depending only on uniform classes] [does great harm|大きな害を与える|causes severe damage] [to student motivation|生徒のモチベーションに|to learner drive] [and gradually robs educators of|そして徐々に教育者から〜を奪う|and slowly deprives teachers of] [their precious time.|彼らの貴重な時間を。|their valuable hours.] [Education specialists frequently discuss the issue|教育の専門家たちは頻繁にその問題を議論する|Schooling experts regularly debate the topic] [at academic forums,|学術フォーラムで、|at scholarly meetings,] [and they have clearly explained|そして彼らは明確に説明してきた|and they have plainly clarified] [to the public why|なぜ〜かを大衆に|to citizens the reason] [integrating|統合することが（何を）|incorporating] [AI tutors|AIチューターを|smart computer teachers] [is absolutely crucial.|絶対に不可欠であるかを。|is completely essential.] [If schools ignore|もし学校が無視すれば|Should educational places overlook] [this digital revolution,|このデジタル革命を、|this tech-based major change,] [their academic outcomes|彼らの学業成績は|their educational results] [will undoubtedly fall short of|間違いなく〜に達しないだろう|will certainly fail to meet] [global standards|世界基準に|international benchmarks] [and inevitably result in|そして必然的に〜という結果になるだろう|and unavoidably lead to] [a severe widening|深刻な拡大に|a serious increasing] [of the achievement gap.|学力格差の。|of the learning difference.] [The situation has become so critical that|状況は非常に危機的になっているため|The state of affairs is now so urgent that] [policymakers argue|政策立案者たちは主張している|lawmakers contend] [we can no longer put up with|私たちはもはや〜を我慢することはできないと|we can not tolerate anymore] [inefficient teaching frameworks.|非効率な教育の枠組みを。|wasteful instructional structures.]
+
+[Customizing|カスタマイズすることは（何を）|Personalizing] [curriculums for every single student|一人ひとりの生徒のためのカリキュラムを|study plans for each individual learner] [is undeniably an exhausting endeavor.|間違いなく人を疲れさせる試みである。|is definitely a tiring task.] [Emily,|エミリーは、|Emily,] [an American friend of mine|私のアメリカ人の友人である|my friend from the US] [who majored in educational technology,|教育工学を専攻した、|who specialized in learning tech,] [points out|指摘している|indicates] [that|（次のことを）|-] [currently,|現在、|at present,] [no less than half|半分もの多くの|as much as fifty percent] [of modern schools|現代の学校が|of contemporary educational places] [are trying|試みていると|are attempting] [to adopt|採用することを（何を）|to utilize] [smart learning software.|スマート学習ソフトウェアを。|intelligent study programs.] [She explains|彼女は説明する|She details] [that|（次のことを）|-] [this rapid shift|この急速な移行は|this fast change] [is not so much a technological trend as|技術的なトレンドというよりはむしろ|is less a tech fashion than] [a matter of educational survival.|教育的生存の問題であると。|an issue of schooling existence.] [The more districts try to keep up with|学区が〜についていこうとすればするほど|As school areas attempt to stay updated with] [the demand for personalized learning,|個別化学習の需要に、|the need for customized studying,] [the more they depend on|ますます彼らは〜に依存する|they increasingly rely on] [algorithmic grading systems.|アルゴリズムによる採点システムに。|computer-sorted marking networks.] [Unsympathetic critics|冷淡な批判者たちは|Uncaring reviewers] [sometimes make fun of|時折〜をからかう|occasionally mock] [machine-led instruction,|機械主導の指導を、|computer-guided teaching,] [claiming|主張しながら（何を）|asserting] [that|（次のことを）|-] [staring at a screen|画面を見つめることは|looking closely at a monitor] [has nothing to do with|〜と何の関係もないと|is completely unrelated to] [genuine human growth.|真の人間的成長とは。|real people's development.] [These critics eagerly find fault with|これらの批判者たちは熱心に〜のあら探しをする|These reviewers passionately criticize] [administrators|管理者の|directors] [who spend tax dollars|税金を費やす|which use public money] [on software licenses,|ソフトウェアライセンスに、|on computer program permissions,] [and they actively try to discourage boards from|そして彼らは積極的に委員会が〜するのを思いとどまらせようとする|and they energetically attempt to deter committees from] [funding|資金を提供することを（何に）|financing] [these digital platforms.|これらのデジタルプラットフォームに。|these tech networks.] [They argue|彼らは主張する|They state] [that|（次のことを）|-] [anyone with sensible pedagogic logic|分別のある教育的論理を持つ人なら誰でも|any person with practical teaching reasoning] [should know better than to|〜するほど愚かではないはずだと|ought to be wise enough not to] [replace|置き換える（何を）|swap] [empathy|共感を|caring feelings] [with algorithms,|アルゴリズムに、|for computer steps,] [predicting|予測しながら（何を）|forecasting] [that|（次のことを）|-] [these schools will soon run out of|これらの学校はすぐに〜を使い果たすだろうと|these educational places will shortly exhaust their] [funds|資金を|money] [and be forced to rule out|そして〜を除外せざるを得なくなるだろうと|and have no choice but to eliminate] [human interaction.|人間同士の交流を。|people's communication.]
+
+[Despite this intense pushback,|この激しい反発にもかかわらず、|In spite of this strong resistance,] [passionate educational leaders|情熱的な教育のリーダーたちは|enthusiastic schooling heads] [refuse to give way to skepticism.|懐疑論に道を譲ることを拒否している。|decline to yield to doubting.] [They have set about|彼らは〜に取りかかっている|They have begun] [designing|設計することに（何を）|planning] [hybrid classrooms|ハイブリッド教室を|mixed learning rooms] [to ensure|確保するために（何を）|to guarantee] [optimal learning environments.|最適な学習環境を。|best possible study spaces.] [To make up for|〜を埋め合わせるために|To compensate for] [the lack of individual attention,|個別の注目の欠如を、|the absence of personal focus,] [districts carry out|学区は〜を実行する|school areas implement] [extensive AI tutoring integration|広範なAIチューターの統合を|widespread smart teacher adoption] [that completely does away with|（それは）〜を完全に廃止する|which entirely eliminates] [the burden of manual test grading.|手動のテスト採点の負担を。|the heavy load of hand-done exam marking.] [Initially,|当初は、|At first,] [hardly any veteran teachers|ベテランの教師はほとんど〜なかった|almost no experienced instructors] [wanted to take part in|参加したがら|desired to participate in] [this software trial,|このソフトウェアの試験運用に、|this computer program test,] [and scarcely anyone believed|そして信じる人はほとんどいなかった|and very few people thought] [they could successfully get over|彼らがうまく乗り越えられると|they could effectively overcome] [their fear of being replaced.|取って代わられることへの恐れを。|their worry about being swapped out.] [However,|しかしながら、|Yet,] [innovative principals applied for|革新的な校長たちは〜に申し込んだ|forward-thinking school heads requested] [federal tech grants|連邦の技術助成金に|national tech financial aid] [and had customized analytics dashboards developed|そしてカスタマイズされた分析ダッシュボードを開発してもらった|and got tailored data-display screens created] [to streamline|合理化するために（何を）|to simplify] [progress tracking.|進捗管理を。|improvement monitoring.] [These modern digital tools|これらの現代のデジタルツールは|These contemporary computer programs] [are highly convenient for classroom instructors.|教室のインストラクターにとって非常に都合が良い。|are very useful for room teachers.] [The software makes it a rule to|そのソフトウェアは〜することを規則にしている|The program is designed to always] [analyze|分析する（何を）|examine] [student performance data|生徒の成績データを|learner result information] [once every two hours,|2時間ごとに、|every 120 minutes,] [predicting|予測しながら（何を）|forecasting] [learning blocks|学習のつまずきを|study obstacles] [with incredible accuracy.|信じられないほどの正確さで。|with amazing precision.] [Because of this,|このため、|Due to this,] [almost all of the teaching staff|教職員のほとんどすべてが|nearly every instructional worker] [quickly figure out how to|すぐに〜する方法を理解する|rapidly learn the way to] [intervene|介入する|step in] [effectively.|効果的に。|successfully.] [Now,|今では、|Currently,] [quite a few educators|かなり多くの教育者が|many teachers] [can easily tell|簡単に見分けることができる|can readily distinguish] [a highly efficient AI-assisted lesson from|高効率のAI支援授業を〜と|a very effective computer-aided class from] [a conventional passive one.|従来の受動的なもの。|a traditional inactive one.]
+
+[We cannot take it for granted that|私たちは〜ということを当然のことと思ってはいけない|We must not assume that] [students will naturally absorb information|生徒が自然に情報を吸収する|learners will normally take in data] [without deliberate, engaging interventions.|意図的で魅力的な介入なしに。|without intentional, interesting actions.] [As adaptive learning technology|適応型学習技術が|Because flexible studying tech] [has finally come of age,|ついに十分に発達したので、|has at last fully developed,] [we must go through with|私たちは〜をやり遂げなければならない|we need to complete the process of] [integrating|統合することを（何を）|incorporating] [these intelligent tools|これらのインテリジェントなツールを|these smart instruments] [into our national curriculums.|国家のカリキュラムに。|into our country's study plans.] [The true value|真の価値は|The real worth] [of educational AI|教育用AIの|of schooling smart programs] [lies in|〜に存在する|is found in] [its ability to pinpoint specific weaknesses,|特定の弱点を正確に特定するその能力に、|its power to exactly find particular weak areas,] [and experiencing|そして経験することは（何を）|and going through] [a precisely tailored study plan|正確に調整された学習計画を|an exactly fitted study schedule] [is far superior to|〜よりもはるかに優れている|is much better than] [struggling|苦労すること|having a hard time] [through a generic textbook.|一般的な教科書を通して。|with a basic schoolbook.] [Many modern pedagogues|現代の多くの教育学者は|Numerous contemporary teaching experts] [now prefer|現在〜を好む|currently favor] [active collaboration with algorithms to|アルゴリズムとの積極的な協働を〜よりも|energetic teamwork with computer rules over] [passive reliance|受動的な依存|inactive dependence] [on intuition alone.|直感だけへの。|on instincts by themselves.] [Even though|〜であるにもかかわらず|Despite the fact that] [building|構築することは（何を）|constructing] [a smart classroom|スマート教室を|an intelligent learning room] [from scratch|ゼロから|from the very beginning] [often costs twice as much effort and capital as|しばしば〜の2倍の労力と資金がかかる|frequently requires double the work and money of] [maintaining|維持することの（何を）|keeping up] [old blackboards,|古い黒板を、|aged chalkboards,] [it makes perfect sense|それは完全に理にかなっている|it is completely logical] [for the intellectual growth of our youth.|私たちの若者の知的な成長のために。|for the mind development of our young people.] [The newly designed digital interfaces|新しく設計されたデジタルインターフェースは|The recently created computer screens] [feel soft and accessible,|柔らかくアクセスしやすいように感じられる、|have a smooth and easy-to-use texture,] [providing|提供しながら（何を）|supplying] [a stress-free experience.|ストレスのない体験を。|a worry-free time.] [We can certainly count on|私たちは確かに頼ることができる|We can definitely rely upon] [the younger generation of teachers,|若い世代の教師たちに、|the new group of instructors,] [who are highly capable of|彼らは〜する能力が非常に高い|who are extremely able to] [dealing with the emotional needs|感情的なニーズに対処する|handle the feeling-related requirements] [of students|生徒たちの|of learners] [while keeping|保ちながら（何をどう）|whilst maintaining] [academic rigor high.|学問的な厳格さを高く。|study strictness tall.] [This educational evolution|この教育の進化は|This schooling development] [stands out as|〜として際立っている|is prominent as] [by far the most inspiring pedagogical shift|飛び抜けて最も感動的な教育的シフト|easily the most encouraging teaching change] [of our time.|私たちの時代の。|of this era.] [Ultimately,|最終的に、|In the end,] [our global society will be all the better for|私たちのグローバル社会は〜のおかげでいっそう良くなるだろう|our worldwide community will greatly improve by] [embracing|受け入れること（何を）|adopting] [this personalized approach,|この個別化されたアプローチを、|this customized method,] [making the advancement|そして進歩させることは（なる）|causing the progress] [of AI in classrooms|教室でのAIの|of smart programs in learning rooms] [a goal definitely worth pursuing.|間違いなく追求する価値のある目標に。|an aim surely deserving of effort.]`,
+                questions: [
+                    { q: "According to the first paragraph, what is one major consequence of relying solely on one-size-fits-all lessons?", options: ["It provides educators with a much larger amount of precious time.", "It does great harm to student motivation and gradually robs educators of their precious time.", "It makes managing thirty students at once highly convenient for modern students.", "It encourages academic researchers to put up with inefficient teaching frameworks."], answer: 1, explanation: "第1段落の中盤に「画一的な授業のみに依存することは生徒のモチベーションに大きな害を与え（does great harm...）、徐々に教育者から貴重な時間を奪う（robs educators of...）」とあります。" },
+                    { q: "What do unsympathetic critics claim about machine-led instruction?", options: ["They argue that it has nothing to do with genuine human growth and make fun of it.", "They predict it will run out of funds and completely rule out sensible pedagogic logic.", "They apply for tax dollars to ensure students keep up with the demand for personalized learning.", "They believe anyone with an understanding of algorithms should know better than to replace empathy with human interaction."], answer: 0, explanation: "第2段落中盤で「冷淡な批判者たちは時折、機械主導の指導をからかい（make fun of）、画面を見つめることは真の人間的成長とは何の関係もない（has nothing to do with...）と主張する」とあります。" },
+                    { q: "How did school districts compensate for the lack of individual attention?", options: ["By making it a rule to replace empathy with algorithms for every participating student.", "By carrying out extensive AI tutoring integration that completely does away with the burden of manual test grading.", "By giving way to skepticism and stopping hybrid classrooms in modern schools.", "By predicting that veteran teachers will quickly figure out how to enjoy generic textbooks."], answer: 1, explanation: "第3段落前半に「個別の注目の欠如を埋め合わせるために（To make up for...）、学区は手動のテスト採点の負担を完全に廃止する（does away with...）広範なAIチューターの統合を実行している（carry out...）」とあります。" },
+                    { q: "Why do many modern pedagogues prefer active collaboration with algorithms?", options: ["Because building a smart classroom often costs twice as much effort and capital as maintaining old blackboards.", "Because the true value of educational AI will naturally adapt to extreme digital overload without intervention.", "Because they believe that experiencing a precisely tailored study plan is far superior to struggling through a generic textbook.", "Because relying on passive consumption of digital tools has nothing to do with authentic emotional depth."], answer: 2, explanation: "第4段落中盤で「特定の弱点を正確に特定する能力にあり（lies in...）、正確に調整された学習計画を経験することは一般的な教科書を通して苦労するよりもはるかに優れている（far superior to...）」ため、「現代の教育学者の多くは、アルゴリズムとの積極的な協働を直感だけへの受動的な依存よりも好む（prefer A to B）」と説明されています。" },
+                    { q: "What is the author's final conclusion about the integration of AI in classrooms?", options: ["It is an exhausting process that will inevitably result in a complete rejection of digital innovation.", "It stands out as by far the most inspiring pedagogical shift, and our global society will be all the better for embracing it.", "It makes perfect sense only if we can take it for granted that teenagers will avoid old blackboards.", "It proves that the younger generation of teachers is incapable of dealing with the emotional needs of students."], answer: 1, explanation: "最終段落の最後に「この教育の進化は、現代で飛び抜けて最も（by far the most）感動的な教育的シフトとして際立っている」「最終的に、我々のグローバル社会はこの個別化されたアプローチを受け入れることでいっそう良くなる（all the better for...）」とあります。" }
+                ],
+                notes: [
+                    { title: "STEP 08: 動詞の語法", items: ["discuss the issue: 問題を議論する", "explain to the public why: なぜ〜かを大衆に説明する", "do great harm: 大きな害を与える", "rob A of B: AからBを奪う", "discourage boards from V-ing: 委員会が〜するのを思いとどまらせる", "have dashboards developed: ダッシュボードを開発してもらう", "tell A from B: AとBを区別する", "lie in: 〜に存在する", "feel soft: 柔らかく感じる"] },
+                    { title: "STEP 09: イディオム", items: ["fall short of: 〜に達しない", "result in: 〜という結果になる", "put up with: 〜を我慢する", "major in: 〜を専攻する", "keep up with: 〜についていく", "make fun of: 〜をからかう", "have nothing to do with: 〜と何の関係もない", "find fault with: 〜のあら探しをする", "run out of: 〜を使い果たす", "rule out: 〜を除外する", "give way to: 〜に屈する", "set about: 〜に取りかかる", "make up for: 〜を埋め合わせる", "carry out: 〜を実行する", "do away with: 〜を廃止する", "take part in: 〜に参加する", "get over: 〜を乗り越える", "apply for: 〜に申し込む", "make it a rule to: 〜することにしている", "figure out: 〜を理解する", "take it for granted: 〜を当然のことと思う", "come of age: 十分に発達する", "go through with: 〜をやり遂げる", "make sense: 理にかなう", "count on: 〜を頼る", "deal with: 〜に対処する", "stand out: 際立つ"] },
+                    { title: "STEP 11: 比較", items: ["larger than that of: 〜のそれよりも大きい", "not so much A as B: AというよりむしろB", "The more... the more...: 〜すればするほど、ますます〜", "no less than: 〜もの多くの", "know better than to: 〜するほど愚かではない", "superior to: 〜より優れている", "prefer A to B: BよりAを好む", "twice as much effort and capital as: 〜の2倍の労力と資金", "by far the most: 飛び抜けて最も〜", "all the better for: 〜のおかげでいっそう良い"] },
+                    { title: "STEP 12/13: 代名詞・形容副詞", items: ["lately: 最近", "an American friend of mine: 私のアメリカ人の友人", "exhausting: 人を疲れさせる", "sensible: 分別のある", "hardly any: ほとんど〜ない", "convenient for: 〜にとって都合が良い", "every two hours: 2時間ごとに", "almost all of: 〜のほとんどすべて", "quite a few: かなり多くの", "capable of: 〜する能力がある", "worth pursuing: 追求する価値がある"] }
+                ]
+            },
+            {
+                id: 3, 
+                title: "Essay 3: The Global Shift to Renewable Energy", 
+                level: "Pre-1st",
+                passage: `[Historically,|歴史的に見て、|In the past,] [industrial nations|産業国は|manufacturing countries] [have relied heavily on|〜に大きく依存してきた|have depended a lot on] [fossil fuels|化石燃料と|coal and oil] [and centralized power grids.|そして中央集権的な送電網に。|and centralized electricity networks.] [However, lately,|しかし、最近、|Recently, though,] [climate scientists|気候科学者たちは|weather researchers] [have warned|警告している|have cautioned] [that|（次のことを）|-] [this carbon-intensive energy model|この炭素集約的なエネルギーモデルが|this heavy-pollution power system] [is threatening to destroy|破壊する恐れがあると|is risking destroying] [the global ecosystem.|地球の生態系を。|the worldwide natural balance.] [The volume of greenhouse gas emissions|温室効果ガス排出の量は|The amount of heat-trapping air pollution] [measured today|今日測定される|calculated nowadays] [is much larger than that of|〜のそれよりもはるかに大きい|is significantly greater than that of] [the pre-industrial era,|産業革命以前の時代の、|the time before factories,] [meaning|意味している（何を）|indicating] [coal-fired power plants now account for|石炭火力発電所が現在〜の割合を占めていると|coal burning power stations currently make up] [a catastrophic portion|壊滅的な部分の|a disastrous part] [of global warming.|地球温暖化の。|of the world getting hotter.] [Relying solely on non-renewable resources|再生不可能な資源のみに依存することは|Depending only on finite supplies] [does great harm|大きな害を与える|causes severe damage] [to the environment|環境に|to the natural world] [and gradually robs future generations of|そして徐々に将来の世代から〜を奪う|and slowly deprives upcoming people of] [a habitable planet.|居住可能な惑星を。|a livable world.] [Environmentalists frequently discuss the issue|環境保護主義者たちは頻繁にその問題を議論する|Eco-activists regularly debate the topic] [at international climate summits,|国際的な気候サミットで、|at global weather meetings,] [and they have clearly explained|そして彼らは明確に説明してきた|and they have plainly clarified] [to the public why|なぜ〜かを大衆に|to citizens the reason] [transitioning|移行することが（何へ）|changing] [to green energy|グリーンエネルギーへ|to clean power] [is absolutely crucial.|絶対に不可欠であるかを。|is completely essential.] [If governments ignore|もし政府が無視すれば|Should administrations overlook] [this ecological tipping point,|この生態学的な転換点を、|this nature-related turning moment,] [their emission reduction targets|彼らの排出削減目標は|their pollution cutting goals] [will undoubtedly fall short of|間違いなく〜に達しないだろう|will certainly fail to meet] [the Paris Agreement standards|パリ協定の基準に|the international climate benchmarks] [and inevitably result in|そして必然的に〜という結果になるだろう|and unavoidably lead to] [severe natural disasters.|深刻な自然災害に。|serious weather catastrophes.] [The climate emergency has become so critical that|気候の緊急事態は非常に危機的になっているため|The weather crisis is now so urgent that] [policymakers argue|政策立案者たちは主張している|lawmakers contend] [we can no longer put up with|私たちはもはや〜を我慢することはできないと|we can not tolerate anymore] [these unsustainable practices.|これらの持続不可能な慣行を。|these non-green habits.]
+
+[Overhauling|全面的な見直しをすることは（何を）|Completely rebuilding] [the entire global energy grid|世界のエネルギー網全体を|the whole worldwide power network] [is undeniably an exhausting endeavor.|間違いなく人を疲れさせる試みである。|is definitely a tiring task.] [David,|デイビッドは、|David,] [an American friend of mine|私のアメリカ人の友人である|my friend from the US] [who majored in sustainable engineering,|持続可能な工学を専攻した、|who specialized in eco-friendly building,] [points out|指摘している|indicates] [that|（次のことを）|-] [currently,|現在、|at present,] [no less than forty percent|40%もの多くの|as much as 40%] [of progressive cities|進歩的な都市が|of forward-thinking towns] [are trying|試みていると|are attempting] [to run entirely on|完全に〜で稼働することを|to operate completely using] [renewable sources.|再生可能な情報源（資源）で。|green power supplies.] [He explains|彼は説明する|He details] [that|（次のことを）|-] [this rapid transition|この急速な移行は|this fast change] [is not so much a political statement as|政治的な声明というよりはむしろ|is less a government message than] [a matter of sheer economic logic.|純粋な経済的論理の問題であると。|an issue of pure financial reasoning.] [The more countries try to keep up with|国々が〜についていこうとすればするほど|As nations attempt to stay updated with] [the demand for clean electricity,|クリーンな電力の需要に、|the need for green power,] [the more they depend on|ますます彼らは〜に依存する|they increasingly rely on] [wind and solar farms.|風力および太陽光発電所に。|breeze and sun energy plants.] [Unsympathetic critics in the oil industry|石油業界の冷淡な批判者たちは|Uncaring reviewers in the fossil fuel business] [sometimes make fun of|時折〜をからかう|occasionally mock] [renewable energy initiatives,|再生可能エネルギーの取り組みを、|green power plans,] [claiming|主張しながら（何を）|asserting] [that|（次のことを）|-] [solar panels|ソーラーパネルは|sun-catching boards] [have nothing to do with|〜と何の関係もないと|are completely unrelated to] [providing reliable baseload power.|信頼できるベースロード電力を提供することとは。|giving steady main electricity.] [These critics eagerly find fault with|これらの批判者たちは熱心に〜のあら探しをする|These reviewers passionately criticize] [governments|政府の|national authorities] [that spend tax money|税金を費やす|which use public funds] [on green subsidies,|環境補助金に、|for eco-friendly financial aid,] [and they actively try to discourage investors from|そして彼らは積極的に投資家が〜するのを思いとどまらせようとする|and they energetically attempt to deter backers from] [funding|資金を提供することを（何に）|financing] [these eco-friendly ventures.|これらの環境に優しいベンチャーに。|these green projects.] [They argue|彼らは主張する|They state] [that|（次のことを）|-] [anyone with sensible economic logic|分別のある経済的論理を持つ人なら誰でも|any person with practical financial reasoning] [should know better than to|〜するほど愚かではないはずだと|ought to be wise enough not to] [abandon|放棄する（何を）|leave behind] [cheap natural gas,|安価な天然ガスを、|inexpensive fossil fuel,] [predicting|予測しながら（何を）|forecasting] [that|（次のことを）|-] [these green startups will soon run out of|これらのグリーンスタートアップはすぐに〜を使い果たすだろうと|these eco-friendly new firms will shortly exhaust their] [funds|資金を|money] [and be forced to rule out|そして〜を除外せざるを得なくなるだろうと|and have no choice but to eliminate] [large-scale expansions.|大規模な拡張を。|huge-size growths.]
+
+[Despite this intense corporate pushback,|この激しい企業の反発にもかかわらず、|In spite of this strong business resistance,] [passionate environmental leaders|情熱的な環境リーダーたちは|enthusiastic eco-friendly heads] [refuse to give way to skepticism.|懐疑論に道を譲ることを拒否している。|decline to yield to doubting.] [They have set about|彼らは〜に取りかかっている|They have begun] [designing|設計することに（何を）|planning] [decentralized microgrids|分散型マイクログリッドを|local small power networks] [to ensure|確保するために（何を）|to guarantee] [optimal energy distribution.|最適なエネルギー配分を。|best possible power sharing.] [To make up for|〜を埋め合わせるために|To compensate for] [the intermittent nature of solar power,|太陽光発電の断続的な性質を、|the stop-and-go behavior of sun energy,] [companies carry out|企業は〜を実行する|businesses implement] [extensive battery storage integration|広範なバッテリーストレージの統合を|widespread power saving adoption] [that completely does away with|（それは）〜を完全に廃止する|which entirely eliminates] [the risk of nighttime blackouts.|夜間の停電のリスクを。|the danger of dark-time power losses.] [Initially,|当初は、|At first,] [hardly any conservative energy executives|保守的なエネルギー幹部はほとんど〜なかった|almost no traditional power bosses] [wanted to take part in|参加したがら|desired to participate in] [this green trial,|このグリーンの試験運用に、|this eco-friendly test,] [and scarcely anyone believed|そして信じる人はほとんどいなかった|and very few people thought] [they could successfully get over|彼らがうまく乗り越えられると|they could effectively overcome] [their fear of grid instability.|送電網の不安定さへの恐れを。|their worry about network shaking.] [However,|しかしながら、|Yet,] [innovative utility companies applied for|革新的な電力会社は〜に申し込んだ|forward-thinking power firms requested] [federal infrastructure grants|連邦のインフラ助成金に|national building financial aid] [and had customized smart-grid software developed|そしてカスタマイズされたスマートグリッドソフトウェアを開発してもらった|and got tailored intelligent-network programs created] [to streamline|合理化するために（何を）|to simplify] [electricity flows.|電力の流れを。|power movement.] [These modern digital tools|これらの現代のデジタルツールは|These contemporary computer programs] [are highly convenient for grid operators.|送電網の運用者にとって非常に都合が良い。|are very useful for network managers.] [The software makes it a rule to|そのソフトウェアは〜することを規則にしている|The program is designed to always] [analyze|分析する（何を）|examine] [power consumption data|電力消費データを|energy use information] [once every two hours,|2時間ごとに、|every 120 minutes,] [predicting|予測しながら（何を）|forecasting] [peak usage times|ピーク使用時間を|highest need periods] [with incredible accuracy.|信じられないほどの正確さで。|with amazing precision.] [Because of this,|このため、|Due to this,] [almost all of the regional grids|地域送電網のほとんどすべてが|nearly every local power network] [quickly figure out how to|すぐに〜する方法を理解する|rapidly learn the way to] [balance|バランスをとる|even out] [the load effectively.|負荷を効果的に。|the power weight successfully.] [Now,|今では、|Currently,] [quite a few engineers|かなり多くのエンジニアが|many technicians] [can easily tell|簡単に見分けることができる|can readily distinguish] [a highly efficient smart grid from|高効率のスマートグリッドを〜と|a very effective intelligent network from] [a conventional wasteful one.|従来の無駄の多いもの。|a traditional inefficient one.]
+
+[We cannot take it for granted that|私たちは〜ということを当然のことと思ってはいけない|We must not assume that] [the Earth will naturally heal itself|地球が自然に自らを癒す|the world will normally fix itself] [without deliberate, drastic interventions.|意図的で抜本的な介入なしに。|without intentional, major actions.] [As renewable battery technology|再生可能なバッテリー技術が|Because green power-saving tech] [has finally come of age,|ついに十分に発達したので、|has at last fully developed,] [we must go through with|私たちは〜をやり遂げなければならない|we need to complete the process of] [integrating|統合することを（何を）|incorporating] [these intelligent energy tools|これらのインテリジェントなエネルギー・ツールを|these smart power instruments] [into our national infrastructure.|国家のインフラに。|into our country's basic structures.] [The true value|真の価値は|The real worth] [of green technology|グリーンテクノロジーの|of eco-friendly tech] [lies in|〜に存在する|is found in] [its ability to preserve ecosystems,|生態系を保存するその能力に、|its power to save natural balances,] [and experiencing|そして経験することは（何を）|and going through] [a clean, sustainable power supply|クリーンで持続可能な電力供給を|a pure, eco-friendly energy source] [is far superior to|〜よりもはるかに優れている|is much better than] [choking|息を詰まらせること|struggling to breathe] [on urban smog.|都市のスモッグで。|from city dirty air.] [Many modern environmentalists|現代の多くの環境保護主義者は|Numerous contemporary eco-activists] [now prefer|現在〜を好む|currently favor] [active collaboration with green tech to|グリーンテクノロジーとの積極的な協働を〜よりも|energetic teamwork with eco-tech over] [passive reliance|受動的な依存|inactive dependence] [on outdated fossil fuels.|時代遅れの化石燃料への。|on old-fashioned dirty energy.] [Even though|〜であるにもかかわらず|Despite the fact that] [building|構築することは（何を）|constructing] [a smart solar network|スマートソーラーネットワークを|an intelligent sun-power system] [from scratch|ゼロから|from the very beginning] [often costs twice as much effort and capital as|しばしば〜の2倍の労力と資金がかかる|frequently requires double the work and money of] [maintaining|維持することの（何を）|keeping up] [old coal plants,|古い石炭工場を、|aged dirty power stations,] [it makes perfect sense|それは完全に理にかなっている|it is completely logical] [for the long-term health of our youth.|私たちの若者の長期的な健康のために。|for the lasting well-being of our young people.] [The newly designed electric vehicles|新しく設計された電気自動車は|The recently created battery-powered cars] [feel soft and quiet,|柔らかく静かに感じられる、|have a smooth and silent texture,] [providing|提供しながら（何を）|supplying] [a pollution-free commute.|無公害の通勤を。|a clean travel to work.] [We can certainly count on|私たちは確かに頼ることができる|We can definitely rely upon] [the younger generation of engineers,|若い世代のエンジニアたちに、|the new group of technicians,] [who are highly capable of|彼らは〜する能力が非常に高い|who are extremely able to] [dealing with the technical needs|技術的なニーズに対処する|handle the engineering requirements] [of global warming|地球温暖化の|of the world getting hotter] [while keeping|保ちながら（何をどう）|whilst maintaining] [economic progress high.|経済の進歩を高く。|financial improvement tall.] [This energy evolution|このエネルギーの進化は|This power development] [stands out as|〜として際立っている|is prominent as] [by far the most inspiring ecological shift|飛び抜けて最も感動的な生態学的シフト|easily the most encouraging nature-related change] [of our time.|私たちの時代の。|of this era.] [Ultimately,|最終的に、|In the end,] [our global society will be all the better for|私たちのグローバル社会は〜のおかげでいっそう良くなるだろう|our worldwide community will greatly improve by] [embracing|受け入れること（何を）|adopting] [this renewable approach,|この再生可能なアプローチを、|this eco-friendly method,] [making the advancement|そして進歩させることは（なる）|causing the progress] [of solar and wind power|太陽光と風力発電の|of sun and breeze energy] [a goal definitely worth pursuing.|間違いなく追求する価値のある目標に。|an aim surely deserving of effort.]`,
+                questions: [
+                    { q: "According to the first paragraph, what is one major consequence of relying solely on non-renewable resources?", options: ["It provides environmentalists with a much larger amount of global warming data.", "It does great harm to the environment and gradually robs future generations of a habitable planet.", "It makes building a smart solar network highly convenient for industrial nations.", "It encourages climate scientists to put up with catastrophic greenhouse gas emissions."], answer: 1, explanation: "第1段落の中盤に「再生不可能な資源のみに依存することは環境に大きな害を与え（does great harm...）、徐々に将来の世代から居住可能な惑星を奪う（robs future generations of...）」とあります。" },
+                    { q: "What do unsympathetic critics in the oil industry claim about renewable energy initiatives?", options: ["They argue that solar panels have nothing to do with providing reliable baseload power and make fun of them.", "They predict it will run out of funds and completely rule out sensible economic logic.", "They apply for tax dollars to ensure progressive cities keep up with the demand for clean electricity.", "They believe anyone with an understanding of global warming should know better than to replace coal with smart grids."], answer: 0, explanation: "第2段落中盤で「石油業界の冷淡な批判者たちは時折、再生可能エネルギーの取り組みをからかい（make fun of）、ソーラーパネルは信頼できるベースロード電力を提供することとは何の関係もない（have nothing to do with...）と主張する」とあります。" },
+                    { q: "How did innovative utility companies compensate for the intermittent nature of solar power?", options: ["By making it a rule to replace battery storage with coal plants for every participating city.", "By carrying out extensive battery storage integration that completely does away with the risk of nighttime blackouts.", "By giving way to skepticism and stopping hybrid microgrids in modern energy networks.", "By predicting that veteran engineers will quickly figure out how to enjoy outdated fossil fuels."], answer: 1, explanation: "第3段落前半に「太陽光発電の断続的な性質を埋め合わせるために（To make up for...）、企業は夜間の停電のリスクを完全に廃止する（does away with...）広範なバッテリーストレージの統合を実行している（carry out...）」とあります。" },
+                    { q: "Why do many modern environmentalists prefer active collaboration with green tech?", options: ["Because building a smart grid often costs twice as much effort and capital as maintaining old coal plants.", "Because the true value of ecological shifts will naturally adapt to extreme power overload without intervention.", "Because they believe that experiencing a clean, sustainable power supply is far superior to choking on urban smog.", "Because relying on passive consumption of fossil fuels has nothing to do with authentic economic progress."], answer: 2, explanation: "第4段落中盤で「生態系を保存するその能力にあり（lies in...）、クリーンで持続可能な電力供給を経験することは都市のスモッグで息を詰まらせるよりもはるかに優れている（far superior to...）」ため、「現代の多くの環境保護主義者は、グリーンテクノロジーとの積極的な協働を時代遅れの化石燃料への受動的な依存よりも好む（prefer A to B）」と説明されています。" },
+                    { q: "What is the author's final conclusion about the global shift to renewable energy?", options: ["It is an exhausting process that will inevitably result in a complete rejection of industrial progress.", "It stands out as by far the most inspiring ecological shift, and our global society will be all the better for embracing it.", "It makes perfect sense only if we can take it for granted that future generations will avoid electric vehicles.", "It proves that the younger generation of engineers is incapable of dealing with the technical needs of global warming."], answer: 1, explanation: "最終段落の最後に「このエネルギーの進化は、現代で飛び抜けて最も（by far the most）感動的な生態学的シフトとして際立っている」「最終的に、我々のグローバル社会はこの再生可能なアプローチを受け入れることでいっそう良くなる（all the better for...）」とあります。" }
+                ],
+                notes: [
+                    { title: "STEP 08: 動詞の語法", items: ["discuss the issue: 問題を議論する", "explain to the public why: なぜ〜かを大衆に説明する", "do great harm: 大きな害を与える", "rob A of B: AからBを奪う", "discourage investors from V-ing: 投資家が〜するのを思いとどまらせる", "have software developed: ソフトウェアを開発してもらう", "tell A from B: AとBを区別する", "lie in: 〜に存在する", "feel soft: 柔らかく感じる"] },
+                    { title: "STEP 09: イディオム", items: ["fall short of: 〜に達しない", "result in: 〜という結果になる", "put up with: 〜を我慢する", "major in: 〜を専攻する", "keep up with: 〜についていく", "make fun of: 〜をからかう", "have nothing to do with: 〜と何の関係もない", "find fault with: 〜のあら探しをする", "run out of: 〜を使い果たす", "rule out: 〜を除外する", "give way to: 〜に屈する", "set about: 〜に取りかかる", "make up for: 〜を埋め合わせる", "carry out: 〜を実行する", "do away with: 〜を廃止する", "take part in: 〜に参加する", "get over: 〜を乗り越える", "apply for: 〜に申し込む", "make it a rule to: 〜することにしている", "figure out: 〜を理解する", "take it for granted: 〜を当然のことと思う", "come of age: 十分に発達する", "go through with: 〜をやり遂げる", "make sense: 理にかなう", "count on: 〜を頼る", "deal with: 〜に対処する", "stand out: 際立つ"] },
+                    { title: "STEP 11: 比較", items: ["larger than that of: 〜のそれよりも大きい", "not so much A as B: AというよりむしろB", "The more... the more...: 〜すればするほど、ますます〜", "no less than: 〜もの多くの", "know better than to: 〜するほど愚かではない", "superior to: 〜より優れている", "prefer A to B: BよりAを好む", "twice as much effort and capital as: 〜の2倍の労力と資金", "by far the most: 飛び抜けて最も〜", "all the better for: 〜のおかげでいっそう良い"] },
+                    { title: "STEP 12/13: 代名詞・形容副詞", items: ["lately: 最近", "an American friend of mine: 私のアメリカ人の友人", "exhausting: 人を疲れさせる", "sensible: 分別のある", "hardly any: ほとんど〜ない", "convenient for: 〜にとって都合が良い", "every two hours: 2時間ごとに", "almost all of: 〜のほとんどすべて", "quite a few: かなり多くの", "capable of: 〜する能力がある", "worth pursuing: 追求する価値がある"] }
+                ]
+            },
+            {
+                id: 4, 
+                title: "Essay 4: The Psychology of Remote Work", 
+                level: "Pre-1st",
+                passage: `[Historically,|歴史的に見て、|In the past,] [corporate cultures|企業文化は|company traditions] [have relied heavily on|〜に大きく依存してきた|have depended a lot on] [physical offices|物理的なオフィスと|real-world workplaces] [and face-to-face management.|そして対面での管理に。|and in-person supervision.] [However, lately,|しかし、最近、|Recently, though,] [occupational psychologists|産業心理学者たちは|work-mind experts] [have warned|警告している|have cautioned] [that|（次のことを）|-] [this rigid commuting model|この硬直した通勤モデルが|this inflexible travel-to-work system] [is failing to support|サポートすることに失敗しつつあると|is not succeeding in backing up] [modern employees.|現代の従業員を。|contemporary workers.] [The volume of daily stress|日々のストレスの量は|The amount of everyday tension] [reported today|今日報告される|documented nowadays] [is much larger than that of|〜のそれよりもはるかに大きい|is significantly greater than that of] [the pre-digital era,|デジタル時代以前の、|the time before computers,] [meaning|意味している（何を）|indicating] [long commutes now account for|長時間の通勤が現在〜の割合を占めていると|lengthy travel currently makes up] [a major source|主要な原因の|a primary origin] [of worker burnout.|労働者の燃え尽き症候群の。|of employee extreme fatigue.] [Relying solely on mandatory office attendance|オフィスへの強制出席のみに依存することは|Depending only on required building presence] [does great harm|大きな害を与える|causes severe damage] [to work-life balance|ワークライフバランスに|to job-home harmony] [and gradually robs professionals of|そして徐々に専門家たちから〜を奪う|and slowly deprives skilled workers of] [their precious free time.|彼らの貴重な自由時間を。|their valuable spare hours.] [HR specialists frequently discuss the issue|人事の専門家たちは頻繁にその問題を議論する|Human resource experts regularly debate the topic] [at corporate symposiums,|企業のシンポジウムで、|at company meetings,] [and they have clearly explained|そして彼らは明確に説明してきた|and they have plainly clarified] [to the public why|なぜ〜かを大衆に|to citizens the reason] [adopting|採用することが（何を）|utilizing] [flexible remote work|柔軟なリモートワークを|adaptable work-from-home] [is absolutely crucial.|絶対に不可欠であるかを。|is completely essential.] [If companies ignore|もし企業が無視すれば|Should businesses overlook] [this cultural shift,|この文化的な移行を、|this societal change,] [their employee retention rates|彼らの従業員定着率は|their worker-keeping numbers] [will undoubtedly fall short of|間違いなく〜に達しないだろう|will certainly fail to meet] [industry standards|業界の基準に|business benchmarks] [and inevitably result in|そして必然的に〜という結果になるだろう|and unavoidably lead to] [a severe loss|深刻な喪失に|a serious drop] [of top talent.|トップの才能の。|of best-level skills.] [The situation has become so critical that|状況は非常に危機的になっているため|The state of affairs is now so urgent that] [policymakers argue|政策立案者たちは主張している|lawmakers contend] [we can no longer put up with|私たちはもはや〜を我慢することはできないと|we can not tolerate anymore] [inefficient traditional workflows.|非効率な伝統的ワークフローを。|wasteful old-style work processes.]
+
+[Transitioning|移行することは（何を）|Changing] [an entire workforce to a remote setup|全従業員をリモート環境へ|all workers to a work-from-home system] [is undeniably an exhausting endeavor.|間違いなく人を疲れさせる試みである。|is definitely a tiring task.] [Sarah,|サラは、|Sarah,] [an American friend of mine|私のアメリカ人の友人である|my friend from the US] [who majored in organizational psychology,|組織心理学を専攻した、|who specialized in group-mind studies,] [points out|指摘している|indicates] [that|（次のことを）|-] [currently,|現在、|at present,] [no less than sixty percent|60%もの多くの|as much as 60%] [of modern enterprises|現代の企業が|of contemporary companies] [are trying|試みていると|are attempting] [to adopt|採用することを（何を）|to utilize] [hybrid working models.|ハイブリッドな働き方モデルを。|mixed office-and-home systems.] [She explains|彼女は説明する|She details] [that|（次のことを）|-] [this rapid shift|この急速な移行は|this fast change] [is not so much a temporary trend as|一時的なトレンドというよりはむしろ|is less a short-term fashion than] [a fundamental evolution of business.|ビジネスの根本的な進化であると。|a basic development of commerce.] [The more managers try to keep up with|マネージャーたちが〜についていこうとすればするほど|As bosses attempt to stay updated with] [the demand for autonomy,|自律性への要求に、|the need for self-direction,] [the more they depend on|ますます彼らは〜に依存する|they increasingly rely on] [cloud-based collaboration tools.|クラウドベースのコラボレーションツールに。|internet-hosted teamwork programs.] [Unsympathetic critics in older management|古い経営層の冷淡な批判者たちは|Uncaring reviewers in traditional leadership] [sometimes make fun of|時折〜をからかう|occasionally mock] [remote team-building exercises,|リモートでのチームビルディング演習を、|online group-bonding activities,] [claiming|主張しながら（何を）|asserting] [that|（次のことを）|-] [working from a living room|リビングルームから働くことは|doing job tasks from home] [has nothing to do with|〜と何の関係もないと|is completely unrelated to] [genuine corporate productivity.|真の企業の生産性とは。|real company efficiency.] [These critics eagerly find fault with|これらの批判者たちは熱心に〜のあら探しをする|These reviewers passionately criticize] [executives|幹部の|directors] [who spend company money|会社のお金を費やす|which use corporate funds] [on home office stipends,|ホームオフィスの手当に、|on house-workplace allowances,] [and they actively try to discourage boards from|そして彼らは積極的に取締役会が〜するのを思いとどまらせようとする|and they energetically attempt to deter committees from] [funding|資金を提供することを（何に）|financing] [these flexible policies.|これらの柔軟な方針に。|these adaptable rules.] [They argue|彼らは主張する|They state] [that|（次のことを）|-] [anyone with sensible managerial logic|分別のある経営的論理を持つ人なら誰でも|any person with practical leadership reasoning] [should know better than to|〜するほど愚かではないはずだと|ought to be wise enough not to] [abandon|放棄する（何を）|leave behind] [strict office oversight,|厳格なオフィスの監視を、|tight workplace monitoring,] [predicting|予測しながら（何を）|forecasting] [that|（次のことを）|-] [these remote teams will soon run out of|これらのリモートチームはすぐに〜を使い果たすだろうと|these work-from-home groups will shortly exhaust their] [focus|集中力を|concentration] [and be forced to rule out|そして〜を除外せざるを得なくなるだろうと|and have no choice but to eliminate] [complex projects.|複雑なプロジェクトを。|complicated tasks.]
+
+[Despite this intense managerial pushback,|この激しい経営側の反発にもかかわらず、|In spite of this strong leadership resistance,] [passionate HR leaders|情熱的な人事のリーダーたちは|enthusiastic human resource heads] [refuse to give way to skepticism.|懐疑論に道を譲ることを拒否している。|decline to yield to doubting.] [They have set about|彼らは〜に取りかかっている|They have begun] [designing|設計することに（何を）|planning] [virtual workspaces|仮想ワークスペースを|online working areas] [to ensure|確保するために（何を）|to guarantee] [optimal team cohesion.|最適なチームの結束を。|best possible group sticking-together.] [To make up for|〜を埋め合わせるために|To compensate for] [the lack of water-cooler conversations,|給湯室での雑談（気軽な会話）の欠如を、|the absence of casual office chats,] [companies carry out|企業は〜を実行する|businesses implement] [extensive digital communication training|広範なデジタルコミュニケーション研修を|widespread online talking education] [that completely does away with|（それは）〜を完全に廃止する|which entirely eliminates] [the feeling of professional isolation.|職業的な孤立感を。|the sense of career loneliness.] [Initially,|当初は、|At first,] [hardly any veteran executives|ベテランの幹部はほとんど〜なかった|almost no experienced bosses] [wanted to take part in|参加したがら|desired to participate in] [this flexible trial,|この柔軟な試験運用に、|this adaptable test,] [and scarcely anyone believed|そして信じる人はほとんどいなかった|and very few people thought] [they could successfully get over|彼らがうまく乗り越えられると|they could effectively overcome] [their fear of unmonitored workers.|監視されていない労働者への恐れを。|their worry about un-watched employees.] [However,|しかしながら、|Yet,] [innovative startups applied for|革新的なスタートアップは〜に申し込んだ|forward-thinking new firms requested] [digital infrastructure grants|デジタルインフラ助成金に|tech building financial aid] [and had customized productivity dashboards developed|そしてカスタマイズされた生産性ダッシュボードを開発してもらった|and got tailored efficiency-display screens created] [to streamline|合理化するために（何を）|to simplify] [project tracking.|プロジェクト管理を。|task monitoring.] [These modern digital tools|これらの現代のデジタルツールは|These contemporary computer programs] [are highly convenient for team leaders.|チームリーダーにとって非常に都合が良い。|are very useful for group bosses.] [The software makes it a rule to|そのソフトウェアは〜することを規則にしている|The program is designed to always] [analyze|分析する（何を）|examine] [workflow data|ワークフローのデータを|task-movement information] [once every two hours,|2時間ごとに、|every 120 minutes,] [predicting|予測しながら（何を）|forecasting] [potential bottlenecks|潜在的なボトルネックを|possible hold-ups] [with incredible accuracy.|信じられないほどの正確さで。|with amazing precision.] [Because of this,|このため、|Due to this,] [almost all of the remote teams|リモートチームのほとんどすべてが|nearly every work-from-home group] [quickly figure out how to|すぐに〜する方法を理解する|rapidly learn the way to] [communicate|コミュニケーションをとる|exchange ideas] [effectively.|効果的に。|successfully.] [Now,|今では、|Currently,] [quite a few consultants|かなり多くのコンサルタントが|many business advisors] [can easily tell|簡単に見分けることができる|can readily distinguish] [a highly efficient remote workforce from|高効率のリモートワーカーを〜と|a very effective work-from-home staff from] [a conventional stressed one.|従来のストレスを抱えたもの。|a traditional tense one.]
+
+[We cannot take it for granted that|私たちは〜ということを当然のことと思ってはいけない|We must not assume that] [employees will naturally stay motivated|従業員が自然にモチベーションを維持し続ける|workers will normally keep their drive] [without deliberate, supportive management.|意図的で支援的な管理なしに。|without intentional, helpful leadership.] [As asynchronous communication technology|非同期コミュニケーション技術が|Because non-real-time talking tech] [has finally come of age,|ついに十分に発達したので、|has at last fully developed,] [we must go through with|私たちは〜をやり遂げなければならない|we need to complete the process of] [integrating|統合することを（何を）|incorporating] [these intelligent management tools|これらのインテリジェントな管理ツールを|these smart leadership instruments] [into our corporate routines.|企業の日課に。|into our company habits.] [The true value|真の価値は|The real worth] [of remote work|リモートワークの|of work-from-home] [lies in|〜に存在する|is found in] [its ability to foster deep, focused work,|深く集中した仕事を促進するその能力に、|its power to encourage intense, zeroed-in tasks,] [and experiencing|そして経験することは（何を）|and going through] [a quiet, personalized home office|静かで個別化されたホームオフィスを|a peaceful, customized house-workplace] [is far superior to|〜よりもはるかに優れている|is much better than] [struggling|苦労すること|having a hard time] [through a noisy open-plan space.|騒がしいオープンプランの空間で。|in a loud, no-walls office area.] [Many modern professionals|現代の多くの専門家たちは|Numerous contemporary skilled workers] [now prefer|現在〜を好む|currently favor] [active collaboration via cloud tools to|クラウドツールを介した積極的な協働を〜よりも|energetic teamwork using internet programs over] [passive reliance|受動的な依存|inactive dependence] [on endless physical meetings.|終わりのない物理的な会議への。|on non-stop real-world gatherings.] [Even though|〜であるにもかかわらず|Despite the fact that] [building|構築することは（何を）|constructing] [a strong remote culture|強力なリモート文化を|a tough work-from-home tradition] [from scratch|ゼロから|from the very beginning] [often costs twice as much effort and capital as|しばしば〜の2倍の労力と資金がかかる|frequently requires double the work and money of] [maintaining|維持することの（何を）|keeping up] [old office habits,|古いオフィスの習慣を、|aged workplace routines,] [it makes perfect sense|それは完全に理にかなっている|it is completely logical] [for the mental well-being of our workforce.|私たちの労働力の精神的健康のために。|for the mind-health of our employees.] [The newly designed home setups|新しく設計された自宅の環境は|The recently created house-workspaces] [feel soft and welcoming,|柔らかく歓迎されているように感じられる、|have a smooth and inviting texture,] [providing|提供しながら（何を）|supplying] [a stress-free workflow.|ストレスのないワークフローを。|a worry-free job process.] [We can certainly count on|私たちは確かに頼ることができる|We can definitely rely upon] [the younger generation of managers,|若い世代のマネージャーたちに、|the new group of bosses,] [who are highly capable of|彼らは〜する能力が非常に高い|who are extremely able to] [dealing with the emotional needs|感情的なニーズに対処する|handle the feeling-related requirements] [of remote teams|リモートチームの|of work-from-home groups] [while keeping|保ちながら（何をどう）|whilst maintaining] [corporate productivity high.|企業の生産性を高く。|company output tall.] [This workplace evolution|この職場の進化は|This job-location development] [stands out as|〜として際立っている|is prominent as] [by far the most inspiring organizational shift|飛び抜けて最も感動的な組織のシフト|easily the most encouraging group-structure change] [of our time.|私たちの時代の。|of this era.] [Ultimately,|最終的に、|In the end,] [our global society will be all the better for|私たちのグローバル社会は〜のおかげでいっそう良くなるだろう|our worldwide community will greatly improve by] [embracing|受け入れること（何を）|adopting] [this flexible approach,|この柔軟なアプローチを、|this adaptable method,] [making the advancement|そして進歩させることは（なる）|causing the progress] [of remote work environments|リモートワーク環境の|of work-from-home settings] [a goal definitely worth pursuing.|間違いなく追求する価値のある目標に。|an aim surely deserving of effort.]`,
+                questions: [
+                    { q: "According to the first paragraph, what is one major consequence of relying solely on mandatory office attendance?", options: ["It provides workers with a much larger amount of precious free time.", "It does great harm to work-life balance and gradually robs professionals of their precious free time.", "It makes long commutes highly convenient for modern employees.", "It encourages HR specialists to put up with inefficient traditional workflows."], answer: 1, explanation: "第1段落の中盤に「オフィスへの強制出席のみに依存することはワークライフバランスに大きな害を与え（does great harm...）、徐々に専門家たちから貴重な自由時間を奪う（robs professionals of...）」とあります。" },
+                    { q: "What do unsympathetic critics in older management claim about remote team-building exercises?", options: ["They argue that working from a living room has nothing to do with genuine corporate productivity and make fun of it.", "They predict it will run out of funds and completely rule out sensible managerial logic.", "They apply for tax dollars to ensure remote teams keep up with the demand for autonomy.", "They believe anyone with an understanding of hybrid working models should know better than to replace empathy with strict office oversight."], answer: 0, explanation: "第2段落中盤で「古い経営層の冷淡な批判者たちは時折、リモートでの演習をからかい（make fun of）、リビングルームから働くことは真の企業の生産性とは何の関係もない（has nothing to do with...）と主張する」とあります。" },
+                    { q: "How did companies compensate for the lack of water-cooler conversations?", options: ["By making it a rule to replace empathy with algorithms for every participating executive.", "By carrying out extensive digital communication training that completely does away with the feeling of professional isolation.", "By giving way to skepticism and stopping hybrid working models in modern enterprises.", "By predicting that veteran executives will quickly figure out how to enjoy outdated physical meetings."], answer: 1, explanation: "第3段落前半に「給湯室での雑談の欠如を埋め合わせるために（To make up for...）、企業は職業的な孤立感を完全に廃止する（does away with...）広範なデジタルコミュニケーション研修を実行している（carry out...）」とあります。" },
+                    { q: "Why do many modern professionals prefer active collaboration via cloud tools?", options: ["Because building a strong remote culture often costs twice as much effort and capital as maintaining old office habits.", "Because the true value of asynchronous communication will naturally adapt to extreme digital overload without intervention.", "Because they believe that experiencing a quiet, personalized home office is far superior to struggling through a noisy open-plan space.", "Because relying on passive consumption of digital tools has nothing to do with authentic emotional depth."], answer: 2, explanation: "第4段落中盤で「深く集中した仕事を促進するその能力にあり（lies in...）、静かで個別化されたホームオフィスを経験することは騒がしいオープンプランの空間で苦労するよりもはるかに優れている（far superior to...）」ため、「現代の多くの専門家たちは、クラウドツールを介した積極的な協働を終わりのない物理的な会議への受動的な依存よりも好む（prefer A to B）」と説明されています。" },
+                    { q: "What is the author's final conclusion about the evolution of remote work?", options: ["It is an exhausting process that will inevitably result in a complete rejection of digital innovation.", "It stands out as by far the most inspiring organizational shift, and our global society will be all the better for embracing it.", "It makes perfect sense only if we can take it for granted that teenagers will avoid old office habits.", "It proves that the younger generation of managers is incapable of dealing with the emotional needs of remote teams."], answer: 1, explanation: "最終段落の最後に「この職場の進化は、現代で飛び抜けて最も（by far the most）感動的な組織のシフトとして際立っている」「最終的に、我々のグローバル社会はこの柔軟なアプローチを受け入れることでいっそう良くなる（all the better for...）」とあります。" }
+                ],
+                notes: [
+                    { title: "STEP 08: 動詞の語法", items: ["discuss the issue: 問題を議論する", "explain to the public why: なぜ〜かを大衆に説明する", "do great harm: 大きな害を与える", "rob A of B: AからBを奪う", "discourage boards from V-ing: 取締役会が〜するのを思いとどまらせる", "have dashboards developed: ダッシュボードを開発してもらう", "tell A from B: AとBを区別する", "lie in: 〜に存在する", "feel soft: 柔らかく感じる"] },
+                    { title: "STEP 09: イディオム", items: ["fall short of: 〜に達しない", "result in: 〜という結果になる", "put up with: 〜を我慢する", "major in: 〜を専攻する", "keep up with: 〜についていく", "make fun of: 〜をからかう", "have nothing to do with: 〜と何の関係もない", "find fault with: 〜のあら探しをする", "run out of: 〜を使い果たす", "rule out: 〜を除外する", "give way to: 〜に屈する", "set about: 〜に取りかかる", "make up for: 〜を埋め合わせる", "carry out: 〜を実行する", "do away with: 〜を廃止する", "take part in: 〜に参加する", "get over: 〜を乗り越える", "apply for: 〜に申し込む", "make it a rule to: 〜することにしている", "figure out: 〜を理解する", "take it for granted: 〜を当然のことと思う", "come of age: 十分に発達する", "go through with: 〜をやり遂げる", "make sense: 理にかなう", "count on: 〜を頼る", "deal with: 〜に対処する", "stand out: 際立つ"] },
+                    { title: "STEP 11: 比較", items: ["larger than that of: 〜のそれよりも大きい", "not so much A as B: AというよりむしろB", "The more... the more...: 〜すればするほど、ますます〜", "no less than: 〜もの多くの", "know better than to: 〜するほど愚かではない", "superior to: 〜より優れている", "prefer A to B: BよりAを好む", "twice as much effort and capital as: 〜の2倍の労力と資金", "by far the most: 飛び抜けて最も〜", "all the better for: 〜のおかげでいっそう良い"] },
+                    { title: "STEP 12/13: 代名詞・形容副詞", items: ["lately: 最近", "an American friend of mine: 私のアメリカ人の友人", "exhausting: 人を疲れさせる", "sensible: 分別のある", "hardly any: ほとんど〜ない", "convenient for: 〜にとって都合が良い", "every two hours: 2時間ごとに", "almost all of: 〜のほとんどすべて", "quite a few: かなり多くの", "capable of: 〜する能力がある", "worth pursuing: 追求する価値がある"] }
+                ]
+            },
+            {
+                id: 5, 
+                title: "Essay 5: Ocean Plastic Pollution and Clean-up Technologies", 
+                level: "Pre-1st",
+                passage: `[Historically,|歴史的に見て、|In the past,] [human societies|人間社会は|human communities] [have relied heavily on|〜に大きく依存してきた|have depended a lot on] [the world's oceans|世界の海に|the global seas] [as an infinite dumping ground.|無限のゴミ捨て場として。|as a never-ending waste area.] [However, lately,|しかし、最近、|Recently, though,] [marine biologists|海洋生物学者たちは|sea-life scientists] [have warned|警告している|have cautioned] [that|（次のことを）|-] [this careless disposal model|この不注意な廃棄モデルが|this reckless throw-away system] [is threatening to collapse|崩壊させる恐れがあると|is risking destroying] [the entire aquatic ecosystem.|水生生態系全体を。|the whole water-based natural network.] [The volume of microplastics|マイクロプラスチックの量は|The amount of tiny plastic pieces] [detected today|今日検出される|found nowadays] [is much larger than that of|〜のそれよりもはるかに大きい|is significantly greater than that of] [the late twentieth century,|20世紀後半の、|the 1900s' final decades,] [meaning|意味している（何を）|indicating] [plastic debris now accounts for|プラスチックの破片が現在〜の割合を占めていると|plastic trash currently makes up] [a catastrophic portion|壊滅的な部分の|a disastrous part] [of marine pollution.|海洋汚染の。|of sea contamination.] [Relying solely on natural degradation|自然分解のみに依存することは|Depending only on normal breaking-down] [does great harm|大きな害を与える|causes severe damage] [to aquatic life|水生生物に|to water-living animals] [and gradually robs the oceans of|そして徐々に海から〜を奪う|and slowly deprives the seas of] [their biodiversity.|彼らの生物多様性を。|their variety of life.] [Environmentalists frequently discuss the issue|環境保護主義者たちは頻繁にその問題を議論する|Eco-activists regularly debate the topic] [at global conservation summits,|世界的な自然保護サミットで、|at worldwide nature-saving meetings,] [and they have clearly explained|そして彼らは明確に説明してきた|and they have plainly clarified] [to the public why|なぜ〜かを大衆に|to citizens the reason] [deploying|配備することが（何を）|using] [ocean clean-up technologies|海洋浄化技術を|sea-cleaning tech] [is absolutely crucial.|絶対に不可欠であるかを。|is completely essential.] [If nations ignore|もし国家が無視すれば|Should countries overlook] [this ecological disaster,|この生態学的な災害を、|this nature-related catastrophe,] [their conservation efforts|彼らの保護の取り組みは|their saving attempts] [will undoubtedly fall short of|間違いなく〜に達しないだろう|will certainly fail to meet] [international sustainability standards|国際的な持続可能性の基準に|global eco-friendly benchmarks] [and inevitably result in|そして必然的に〜という結果になるだろう|and unavoidably lead to] [a severe collapse|深刻な崩壊に|a serious breakdown] [of fishing industries.|漁業の。|of fish-catching businesses.] [The situation has become so critical that|状況は非常に危機的になっているため|The state of affairs is now so urgent that] [policymakers argue|政策立案者たちは主張している|lawmakers contend] [we can no longer put up with|私たちはもはや〜を我慢することはできないと|we can not tolerate anymore] [these negligent waste management practices.|これらの怠慢な廃棄物管理の慣行を。|these lazy trash-handling habits.]
+
+[Developing|開発することは（何を）|Creating] [a global ocean clean-up system|世界的な海洋浄化システムを|a worldwide sea-cleaning network] [is undeniably an exhausting endeavor.|間違いなく人を疲れさせる試みである。|is definitely a tiring task.] [Mark,|マークは、|Mark,] [an American friend of mine|私のアメリカ人の友人である|my friend from the US] [who majored in marine engineering,|海洋工学を専攻した、|who specialized in sea-tech building,] [points out|指摘している|indicates] [that|（次のことを）|-] [currently,|現在、|at present,] [no less than seventy percent|70%もの多くの|as much as 70%] [of coastal regions|沿岸地域が|of beach-side areas] [are trying|試みていると|are attempting] [to adopt|採用することを（何を）|to utilize] [automated skimming drones.|自動化されたスキミングドローンを。|computer-controlled surface-cleaning robots.] [He explains|彼は説明する|He details] [that|（次のことを）|-] [this rapid technological shift|この急速な技術的移行は|this fast tech change] [is not so much an environmental luxury as|環境的な贅沢品というよりはむしろ|is less a nature-related extra than] [a matter of sheer planetary survival.|純粋な地球の生存の問題であると。|an issue of pure world existence.] [The more countries try to keep up with|国々が〜についていこうとすればするほど|As nations attempt to stay updated with] [the demand for clean beaches,|きれいなビーチの需要に、|the need for trash-free shores,] [the more they depend on|ますます彼らは〜に依存する|they increasingly rely on] [AI-driven collection systems.|AI主導の収集システムに。|smart computer-run gathering networks.] [Unsympathetic critics in the plastics industry|プラスチック業界の冷淡な批判者たちは|Uncaring reviewers in the plastic business] [sometimes make fun of|時折〜をからかう|occasionally mock] [these ambitious clean-up initiatives,|これらの野心的な浄化の取り組みを、|these big-dreaming cleaning plans,] [claiming|主張しながら（何を）|asserting] [that|（次のことを）|-] [deploying robots|ロボットを配備することは|using machines] [has nothing to do with|〜と何の関係もないと|is completely unrelated to] [solving the root cause of pollution.|汚染の根本原因を解決することとは。|fixing the main reason for dirtiness.] [These critics eagerly find fault with|これらの批判者たちは熱心に〜のあら探しをする|These reviewers passionately criticize] [governments|政府の|national authorities] [that spend tax money|税金を費やす|which use public funds] [on experimental drones,|実験的なドローンに、|for testing robots,] [and they actively try to discourage investors from|そして彼らは積極的に投資家が〜するのを思いとどまらせようとする|and they energetically attempt to deter backers from] [funding|資金を提供することを（何に）|financing] [these eco-friendly ventures.|これらの環境に優しいベンチャーに。|these green projects.] [They argue|彼らは主張する|They state] [that|（次のことを）|-] [anyone with sensible economic logic|分別のある経済的論理を持つ人なら誰でも|any person with practical financial reasoning] [should know better than to|〜するほど愚かではないはずだと|ought to be wise enough not to] [waste|浪費する（何を）|squander] [millions|数百万ドルを|huge amounts of money] [on unproven tech,|未証明の技術に、|on untested machines,] [predicting|予測しながら（何を）|forecasting] [that|（次のことを）|-] [these green startups will soon run out of|これらのグリーンスタートアップはすぐに〜を使い果たすだろうと|these eco-friendly new firms will shortly exhaust their] [funds|資金を|money] [and be forced to rule out|そして〜を除外せざるを得なくなるだろうと|and have no choice but to eliminate] [large-scale deployments.|大規模な配備を。|huge-size uses.]
+
+[Despite this intense corporate pushback,|この激しい企業の反発にもかかわらず、|In spite of this strong business resistance,] [passionate environmental engineers|情熱的な環境エンジニアたちは|enthusiastic eco-friendly tech builders] [refuse to give way to skepticism.|懐疑論に道を譲ることを拒否している。|decline to yield to doubting.] [They have set about|彼らは〜に取りかかっている|They have begun] [designing|設計することに（何を）|planning] [advanced trash-collecting barriers|高度なゴミ収集バリアを|sophisticated trash-gathering walls] [to ensure|確保するために（何を）|to guarantee] [optimal debris removal.|最適な破片の除去を。|best possible trash taking-away.] [To make up for|〜を埋め合わせるために|To compensate for] [the vastness of the Great Pacific Garbage Patch,|太平洋ゴミベルトの広大さを、|the huge size of the Pacific trash area,] [companies carry out|企業は〜を実行する|businesses implement] [extensive satellite tracking integration|広範な衛星追跡の統合を|widespread space-camera following adoption] [that completely does away with|（それは）〜を完全に廃止する|which entirely eliminates] [the guesswork of locating plastic concentrations.|プラスチックの密集箇所を特定する推測作業を。|the guessing game of finding plastic piles.] [Initially,|当初は、|At first,] [hardly any conservative maritime organizations|保守的な海事組織はほとんど〜なかった|almost no traditional ocean groups] [wanted to take part in|参加したがら|desired to participate in] [this high-tech trial,|このハイテクの試験運用に、|this advanced-tech test,] [and scarcely anyone believed|そして信じる人はほとんどいなかった|and very few people thought] [they could successfully get over|彼らがうまく乗り越えられると|they could effectively overcome] [their fear of harsh ocean conditions.|過酷な海洋条件への恐れを。|their worry about rough sea weather.] [However,|しかしながら、|Yet,] [innovative research institutes applied for|革新的な研究機関は〜に申し込んだ|forward-thinking science centers requested] [international environmental grants|国際的な環境助成金に|global nature financial aid] [and had customized navigation software developed|そしてカスタマイズされたナビゲーションソフトウェアを開発してもらった|and got tailored path-finding programs created] [to streamline|合理化するために（何を）|to simplify] [the fleet's movements.|船団の動きを。|the ship group's travel.] [These modern digital tools|これらの現代のデジタルツールは|These contemporary computer programs] [are highly convenient for the drone operators.|ドローンの運用者にとって非常に都合が良い。|are very useful for the robot drivers.] [The software makes it a rule to|そのソフトウェアは〜することを規則にしている|The program is designed to always] [analyze|分析する（何を）|examine] [ocean current data|海流データを|sea water-movement information] [once every two hours,|2時間ごとに、|every 120 minutes,] [predicting|予測しながら（何を）|forecasting] [trash accumulation zones|ゴミの蓄積ゾーンを|trash pile-up areas] [with incredible accuracy.|信じられないほどの正確さで。|with amazing precision.] [Because of this,|このため、|Due to this,] [almost all of the automated barriers|自動化されたバリアのほとんどすべてが|nearly every computerized wall] [quickly figure out how to|すぐに〜する方法を理解する|rapidly learn the way to] [trap|閉じ込める（何を）|catch] [plastic waste|プラスチック廃棄物を|plastic trash] [effectively.|効果的に。|successfully.] [Now,|今では、|Currently,] [quite a few marine scientists|かなり多くの海洋科学者が|many sea researchers] [can easily tell|簡単に見分けることができる|can readily distinguish] [a highly efficient smart-cleaner from|高効率のスマートクリーナーを〜と|a very effective intelligent cleaning-machine from] [a conventional passive net.|従来の受動的な網。|a traditional inactive catching-web.]
+
+[We cannot take it for granted that|私たちは〜ということを当然のことと思ってはいけない|We must not assume that] [the oceans will naturally filter themselves|海が自然に自らを濾過する|the seas will normally clean themselves] [without deliberate, massive technological interventions.|意図的で大規模な技術的介入なしに。|without intentional, huge tech actions.] [As autonomous marine robotics|自律型海洋ロボット工学が|Because self-driving sea robot tech] [has finally come of age,|ついに十分に発達したので、|has at last fully developed,] [we must go through with|私たちは〜をやり遂げなければならない|we need to complete the process of] [integrating|統合することを（何を）|incorporating] [these intelligent clean-up tools|これらのインテリジェントな浄化ツールを|these smart cleaning instruments] [into our global conservation efforts.|世界的な保護活動に。|into our worldwide saving plans.] [The true value|真の価値は|The real worth] [of ocean-cleaning tech|海洋浄化技術の|of sea-cleaning tech] [lies in|〜に存在する|is found in] [its ability to restore marine habitats,|海洋の生息地を回復するその能力に、|its power to fix sea living areas,] [and experiencing|そして経験することは（何を）|and going through] [a pristine, plastic-free coastline|手付かずの、プラスチックのない海岸線を|a perfect, trash-free beach area] [is far superior to|〜よりもはるかに優れている|is much better than] [walking|歩くこと|strolling] [through mountains of washed-up garbage.|打ち上げられたゴミの山の中を。|in piles of ocean-returned trash.] [Many modern ecologists|現代の多くの生態学者は|Numerous contemporary nature experts] [now prefer|現在〜を好む|currently favor] [active collaboration with robotics to|ロボット工学との積極的な協働を〜よりも|energetic teamwork with robots over] [passive reliance|受動的な依存|inactive dependence] [on manual beach clean-ups alone.|手作業のビーチ清掃だけへの。|on hand-done shore cleaning by itself.] [Even though|〜であるにもかかわらず|Despite the fact that] [building|構築することは（何を）|constructing] [a fleet of autonomous drones|自律型ドローンの船団を|a group of self-driving robots] [from scratch|ゼロから|from the very beginning] [often costs twice as much effort and capital as|しばしば〜の2倍の労力と資金がかかる|frequently requires double the work and money of] [maintaining|維持することの（何を）|keeping up] [old awareness campaigns,|古い啓発キャンペーンを、|aged public-knowledge pushes,] [it makes perfect sense|それは完全に理にかなっている|it is completely logical] [for the long-term survival of marine life.|海洋生物の長期的な生存のために。|for the lasting existence of sea animals.] [The newly restored beaches|新しく回復されたビーチは|The recently fixed shores] [feel soft and clean,|柔らかくきれいに感じられる、|have a smooth and pure texture,] [providing|提供しながら（何を）|supplying] [a safe haven for wildlife.|野生動物のための安全な避難所を。|a secure resting place for animals.] [We can certainly count on|私たちは確かに頼ることができる|We can definitely rely upon] [the younger generation of engineers,|若い世代のエンジニアたちに、|the new group of technicians,] [who are highly capable of|彼らは〜する能力が非常に高い|who are extremely able to] [dealing with the vast challenges|膨大な課題に対処する|handle the huge difficulties] [of ocean pollution|海洋汚染の|of sea dirtiness] [while keeping|保ちながら（何をどう）|whilst maintaining] [biodiversity high.|生物多様性を高く。|animal variety tall.] [This conservation evolution|この保護の進化は|This saving development] [stands out as|〜として際立っている|is prominent as] [by far the most inspiring ecological shift|飛び抜けて最も感動的な生態学的シフト|easily the most encouraging nature-related change] [of our time.|私たちの時代の。|of this era.] [Ultimately,|最終的に、|In the end,] [our global society will be all the better for|私たちのグローバル社会は〜のおかげでいっそう良くなるだろう|our worldwide community will greatly improve by] [embracing|受け入れること（何を）|adopting] [this proactive technological approach,|この積極的な技術的アプローチを、|this forward-moving tech method,] [making the advancement|そして進歩させることは（なる）|causing the progress] [of ocean clean-up initiatives|海洋浄化の取り組みの|of sea cleaning plans] [a goal definitely worth pursuing.|間違いなく追求する価値のある目標に。|an aim surely deserving of effort.]`,
+                questions: [
+                    { q: "According to the first paragraph, what is one major consequence of relying solely on natural degradation?", options: ["It provides marine biologists with a much larger amount of biodiversity.", "It does great harm to aquatic life and gradually robs the oceans of their biodiversity.", "It makes careless disposal models highly convenient for human societies.", "It encourages environmentalists to put up with negligent waste management practices."], answer: 1, explanation: "第1段落の中盤に「自然分解のみに依存することは水生生物に大きな害を与え（does great harm...）、徐々に海からその生物多様性を奪う（robs the oceans of...）」とあります。" },
+                    { q: "What do unsympathetic critics in the plastics industry claim about these ambitious clean-up initiatives?", options: ["They argue that deploying robots has nothing to do with solving the root cause of pollution and make fun of it.", "They predict it will run out of funds and completely rule out sensible economic logic.", "They apply for tax dollars to ensure coastal regions keep up with the demand for clean beaches.", "They believe anyone with an understanding of AI-driven systems should know better than to replace empathy with automated skimming drones."], answer: 0, explanation: "第2段落中盤で「プラスチック業界の冷淡な批判者たちは時折、野心的な浄化の取り組みをからかい（make fun of）、ロボットを配備することは汚染の根本原因を解決することとは何の関係もない（has nothing to do with...）と主張する」とあります。" },
+                    { q: "How did companies compensate for the vastness of the Great Pacific Garbage Patch?", options: ["By making it a rule to replace battery storage with coal plants for every participating city.", "By carrying out extensive satellite tracking integration that completely does away with the guesswork of locating plastic concentrations.", "By giving way to skepticism and stopping hybrid microgrids in modern energy networks.", "By predicting that veteran engineers will quickly figure out how to enjoy outdated fossil fuels."], answer: 1, explanation: "第3段落前半に「太平洋ゴミベルトの広大さを埋め合わせるために（To make up for...）、企業はプラスチックの密集箇所を特定する推測作業を完全に廃止する（does away with...）広範な衛星追跡の統合を実行している（carry out...）」とあります。" },
+                    { q: "Why do many modern ecologists prefer active collaboration with robotics?", options: ["Because building a fleet of autonomous drones often costs twice as much effort and capital as maintaining old awareness campaigns.", "Because the true value of ecological shifts will naturally adapt to extreme plastic overload without intervention.", "Because they believe that experiencing a pristine, plastic-free coastline is far superior to walking through mountains of washed-up garbage.", "Because relying on passive consumption of digital tools has nothing to do with authentic emotional depth."], answer: 2, explanation: "第4段落中盤で「海洋の生息地を回復するその能力にあり（lies in...）、手付かずのプラスチックのない海岸線を経験することは、打ち上げられたゴミの山の中を歩くよりもはるかに優れている（far superior to...）」ため、「現代の多くの生態学者は、ロボット工学との積極的な協働を手作業のビーチ清掃だけへの受動的な依存よりも好む（prefer A to B）」と説明されています。" },
+                    { q: "What is the author's final conclusion about the ocean clean-up initiatives?", options: ["It is an exhausting process that will inevitably result in a complete rejection of industrial progress.", "It stands out as by far the most inspiring ecological shift, and our global society will be all the better for embracing it.", "It makes perfect sense only if we can take it for granted that future generations will avoid electric vehicles.", "It proves that the younger generation of engineers is incapable of dealing with the technical needs of global warming."], answer: 1, explanation: "最終段落の最後に「この保護の進化は、現代で飛び抜けて最も（by far the most）感動的な生態学的シフトとして際立っている」「最終的に、我々のグローバル社会はこの積極的な技術的アプローチを受け入れることでいっそう良くなる（all the better for...）」とあります。" }
+                ],
+                notes: [
+                    { title: "STEP 08: 動詞の語法", items: ["discuss the issue: 問題を議論する", "explain to the public why: なぜ〜かを大衆に説明する", "do great harm: 大きな害を与える", "rob A of B: AからBを奪う", "discourage investors from V-ing: 投資家が〜するのを思いとどまらせる", "have software developed: ソフトウェアを開発してもらう", "tell A from B: AとBを区別する", "lie in: 〜に存在する", "feel soft: 柔らかく感じる"] },
+                    { title: "STEP 09: イディオム", items: ["fall short of: 〜に達しない", "result in: 〜という結果になる", "put up with: 〜を我慢する", "major in: 〜を専攻する", "keep up with: 〜についていく", "make fun of: 〜をからかう", "have nothing to do with: 〜と何の関係もない", "find fault with: 〜のあら探しをする", "run out of: 〜を使い果たす", "rule out: 〜を除外する", "give way to: 〜に屈する", "set about: 〜に取りかかる", "make up for: 〜を埋め合わせる", "carry out: 〜を実行する", "do away with: 〜を廃止する", "take part in: 〜に参加する", "get over: 〜を乗り越える", "apply for: 〜に申し込む", "make it a rule to: 〜することにしている", "figure out: 〜を理解する", "take it for granted: 〜を当然のことと思う", "come of age: 十分に発達する", "go through with: 〜をやり遂げる", "make sense: 理にかなう", "count on: 〜を頼る", "deal with: 〜に対処する", "stand out: 際立つ"] },
+                    { title: "STEP 11: 比較", items: ["larger than that of: 〜のそれよりも大きい", "not so much A as B: AというよりむしろB", "The more... the more...: 〜すればするほど、ますます〜", "no less than: 〜もの多くの", "know better than to: 〜するほど愚かではない", "superior to: 〜より優れている", "prefer A to B: BよりAを好む", "twice as much effort and capital as: 〜の2倍の労力と資金", "by far the most: 飛び抜けて最も〜", "all the better for: 〜のおかげでいっそう良い"] },
+                    { title: "STEP 12/13: 代名詞・形容副詞", items: ["lately: 最近", "an American friend of mine: 私のアメリカ人の友人", "exhausting: 人を疲れさせる", "sensible: 分別のある", "hardly any: ほとんど〜ない", "convenient for: 〜にとって都合が良い", "every two hours: 2時間ごとに", "almost all of: 〜のほとんどすべて", "quite a few: かなり多くの", "capable of: 〜する能力がある", "worth pursuing: 追求する価値がある"] }
+                ]
+            }
+        ];
+
+        let state = { 
+            selectedTestId: 5, // 初期で最新のEssay 5を開くように設定
+            userAnswers: {}, 
+            submitted: false, 
+            activeTab: 'test',
+            verbsActive: false,
+            idiomsActive: false,
+            comparisonsActive: false,
+            modifiersActive: false,
+            slashActive: false,
+            transActive: false,
+            paraActive: false,
+            tts: { speed: 1.0 }
+        };
+
+        const sidebarContainer = document.getElementById('sidebar-container');
+        const mainContentContainer = document.getElementById('main-content-container');
+        const headerActiveTitle = document.getElementById('header-active-title');
+
+        let synth = window.speechSynthesis;
+        let currentParagraphIndex = 0;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentUtterance = null;
+        let englishVoice = null;
+
+        function setEnglishVoice() {
+            if (!synth) return;
+            const voices = synth.getVoices();
+            englishVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Google')) ||
+                           voices.find(v => v.name.includes('Natural') && v.lang.includes('en')) ||
+                           voices.find(v => v.lang === 'en-US') ||
+                           voices.find(v => v.lang.startsWith('en'));
+        }
+        
+        if (synth) {
+            setEnglishVoice();
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = setEnglishVoice;
+            }
+        }
+
+        function getActiveTest() { return testData.find(t => t.id === state.selectedTestId); }
+        function calculateScore() {
+            const testAnswers = state.userAnswers[state.selectedTestId] || {};
+            let score = 0;
+            (getActiveTest().questions || []).forEach((q, idx) => { if (testAnswers[idx] === q.answer) score++; });
+            return score;
+        }
+
+        window.handleTestChange = (id) => {
+            stopText();
+            state.selectedTestId = id; 
+            state.submitted = false; 
+            state.activeTab = 'test';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderApp();
+        };
+
+        window.handleSelectOption = (qIndex, optionIndex) => {
+            if (state.submitted) return;
+            if (!state.userAnswers[state.selectedTestId]) state.userAnswers[state.selectedTestId] = {};
+            state.userAnswers[state.selectedTestId][qIndex] = optionIndex;
+            renderMainContent(); 
+        };
+
+        window.switchTab = (tab) => { 
+            stopText();
+            state.activeTab = tab; 
+            renderMainContent(); 
+        };
+        window.submitAnswers = () => { state.submitted = true; renderMainContent(); };
+        window.retryTest = () => { state.submitted = false; renderMainContent(); };
+
+        window.exportToWord = () => {
+            const currentTest = getActiveTest();
+            if (!currentTest) return;
+
+            // 括弧とパイプの記法から英文部分だけを抽出する正規表現
+            const extractEnglish = (text) => text.replace(/\[([^|\]]+)(?:\|[^\]]+)*\]/g, '$1');
+
+            // パッセージのクリーンアップと段落化
+            const cleanPassage = extractEnglish(currentTest.passage);
+            const paragraphs = cleanPassage.split('\n\n').map(p => `<p>${p.trim()}</p>`).join('');
+
+            // 問題と選択肢の構築
+            let questionsHTML = '<div style="margin-top: 30px;"><h3>Questions</h3>';
+            (currentTest.questions || []).forEach((qObj, qIdx) => {
+                const cleanQ = extractEnglish(qObj.q);
+                questionsHTML += `<div style="margin-top: 15px; margin-bottom: 10px;"><strong>Q${qIdx + 1}. ${cleanQ}</strong></div>`;
+                questionsHTML += `<ol style="list-style-type: upper-alpha; margin-top: 5px; margin-bottom: 15px; padding-left: 20px;">`;
+                qObj.options.forEach(opt => {
+                    const cleanOpt = extractEnglish(opt);
+                    questionsHTML += `<li>${cleanOpt}</li>`;
+                });
+                questionsHTML += `</ol>`;
+            });
+            questionsHTML += '</div>';
+
+            // Word用のHTMLテンプレート (BOMを付与して文字化け防止)
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>${currentTest.title}</title>
+                    <style>
+                        body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.5; }
+                        h2 { font-size: 14pt; font-weight: bold; margin-bottom: 20px; text-align: center; }
+                        h3 { font-size: 12pt; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; }
+                        p { text-indent: 1.5em; margin-bottom: 10px; text-align: justify; }
+                    </style>
+                </head>
+                <body>
+                    <h2>${currentTest.title}</h2>
+                    ${paragraphs}
+                    ${questionsHTML}
+                </body>
+                </html>
+            `;
+
+            // Blob経由でダウンロード実行
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            // ファイル名から使用不可文字を置換
+            link.download = `${currentTest.title.replace(/[:\\/\\?*|"<>\n\r]/g, '_')}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+
+        function createRegexForTerm(term) {
+            let escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            escaped = escaped.replace(/\bA\b|\bB\b|人|物/g, '(?:[\\w\\s\\-,\']){1,100}');
+            escaped = escaped.replace(/\\\.\\\.\\\./g, '(?:.*?)');
+            
+            escaped = escaped.replace(/\b(feel|discuss|explain|do|rob|discourage|have|had|rise|remind|tell|lie|fall|result|turn|put|set|succeed|lay|give|make|call|take|come|apply|figure|deal|keep|get|stand|cope|run|go|count|carry|major|find|look|break|wait|hand|cost|spend|throw|buy|rule)\b/gi, 
+                function(match) {
+                    const verbs = {
+                        'feel': '(?:feel|feels|felt)', 'discuss': '(?:discuss|discusses|discussed|discussing)', 'explain': '(?:explain|explains|explained|explaining)',
+                        'do': '(?:do|does|did|done|doing)', 'rob': '(?:rob|robs|robbed|robbing)', 'discourage': '(?:discourage|discourages|discouraged|discouraging)',
+                        'have': '(?:have|has|had|having)', 'had': '(?:have|has|had|having)', 'rise': '(?:rise|rises|rose|risen|rising)',
+                        'remind': '(?:remind|reminds|reminded|reminding)', 'tell': '(?:tell|tells|told|telling)', 'lie': '(?:lie|lies|lay|lain|lying)',
+                        'fall': '(?:fall|falls|fell|fallen|falling)', 'result': '(?:result|results|resulted|resulting)', 'turn': '(?:turn|turns|turned|turning)',
+                        'put': '(?:put|puts|putting)', 'set': '(?:set|sets|setting)', 'succeed': '(?:succeed|succeeds|succeeded|succeeding)',
+                        'lay': '(?:lay|lays|laid|laying)', 'give': '(?:give|gives|gave|given|giving)', 'make': '(?:make|makes|made|making)',
+                        'call': '(?:call|calls|called|calling)', 'take': '(?:take|takes|took|taken|taking)', 'come': '(?:come|comes|came|coming)',
+                        'apply': '(?:apply|applies|applied|applying)', 'figure': '(?:figure|figures|figured|figuring)', 'deal': '(?:deal|deals|dealt|dealing)',
+                        'keep': '(?:keep|keeps|kept|keeping)', 'get': '(?:get|gets|got|gotten|getting)', 'stand': '(?:stand|stands|stood|standing)',
+                        'cope': '(?:cope|copes|coped|coping)', 'run': '(?:run|runs|ran|running)', 'go': '(?:go|goes|went|gone|going)',
+                        'count': '(?:count|counts|counted|counting)', 'carry': '(?:carry|carries|carried|carrying)', 'major': '(?:major|majors|majored|majoring)',
+                        'find': '(?:find|finds|found|finding)', 'look': '(?:look|looks|looked|looking)', 'break': '(?:break|breaks|broke|broken|breaking)',
+                        'wait': '(?:wait|waits|waited|waiting)', 'hand': '(?:hand|hands|handed|handing)', 'throw': '(?:throw|throws|threw|thrown|throwing)',
+                        'buy': '(?:buy|buys|bought|buying)', 'rule': '(?:rule|rules|ruled|ruling)'
+                    };
+                    return verbs[match.toLowerCase()] || match;
+                }
+            );
+            const regexStr = '\\b' + escaped.replace(/\\\s+/g, '\\s+') + '\\b';
+            return new RegExp(regexStr, 'gi');
+        }
+
+        function highlightAllTerms(enText, testId) {
+            const test = testData.find(t => t.id === testId);
+            if (!test || !test.notes) return enText;
+
+            let termCategoryMap = {};
+            let allTerms = [];
+            test.notes.forEach(note => {
+                let category = 'modifiers';
+                if (note.title.includes('動詞')) category = 'verbs';
+                else if (note.title.includes('イディオム')) category = 'idioms';
+                else if (note.title.includes('比較')) category = 'comparisons';
+                else if (note.title.includes('代名詞')) category = 'modifiers';
+
+                note.items.forEach(item => {
+                    const splitIndex = item.indexOf(':');
+                    let word = splitIndex !== -1 ? item.substring(0, splitIndex).trim() : item.trim();
+                    if(word.length >= 3) {
+                        allTerms.push(word);
+                        termCategoryMap[word] = category;
+                    }
+                });
+            });
+            allTerms.sort((a, b) => b.length - a.length);
+
+            let highlightedText = enText;
+            allTerms.forEach(term => {
+                try {
+                    const regex = createRegexForTerm(term);
+                    const cat = termCategoryMap[term];
+                    const dictEntry = getDictionaryEntry(term);
+                    const safeDesc = dictEntry ? dictEntry.detail.replace(/"/g, '&quot;') : '';
+                    
+                    highlightedText = highlightedText.replace(regex, (match, offset, string) => {
+                        const before = string.substring(0, offset);
+                        const openSpans = (before.match(/<span/g) || []).length;
+                        const closeSpans = (before.match(/<\/span>/g) || []).length;
+                        if (openSpans > closeSpans) return match; 
+                        return `<span class="grammar-item hl-${cat}" data-desc="${safeDesc}">${match}</span>`;
+                    });
+                } catch(e) {
+                    console.error("Regex error for term: ", term);
+                }
+            });
+            return highlightedText;
+        }
+
+        function renderSidebar() {
+            let html = '';
+            testData.forEach(test => {
+                const isSelected = test.id === state.selectedTestId;
+                const activeClasses = isSelected ? 'bg-indigo-600 text-white font-bold shadow-md transform scale-[1.02]' : 'hover:bg-slate-100 text-slate-600';
+                html += `
+                    <button onclick="window.handleTestChange(${test.id})" class="text-left px-4 py-3 rounded-xl text-sm transition-all flex flex-col gap-1 border border-transparent ${isSelected ? 'border-indigo-700' : 'hover:border-slate-300'} ${activeClasses}">
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">${test.level}</span>
+                        <span class="truncate leading-tight">${test.title}</span>
+                    </button>
+                `;
+            });
+            sidebarContainer.innerHTML = html;
+        }
+
+        /* 共通のテキスト処理（ルビ・スラッシュ・ハイライト）関数 */
+        function processTextWithHighlight(text, testId) {
+            let result = '';
+            const chunks = [...text.matchAll(/\[(.*?)\|(.*?)(?:\|(.*?))?\]/g)];
+            if(chunks.length === 0) {
+                result += highlightAllTerms(text, testId);
+            } else {
+                let lastIndex = 0;
+                chunks.forEach((match) => {
+                    if (match.index > lastIndex) {
+                        result += highlightAllTerms(text.substring(lastIndex, match.index), testId);
+                    }
+                    let enText = match[1];
+                    let jaText = match[2];
+                    let paraText = match[3] || enText;
+                    let highlightedEn = highlightAllTerms(enText, testId);
+                    result += `<ruby>${highlightedEn}<span class="slash">/</span><rt class="translation">${jaText}</rt><rt class="paraphrase">${paraText}</rt></ruby> `;
+                    lastIndex = match.index + match[0].length;
+                });
+                if (lastIndex < text.length) {
+                    result += highlightAllTerms(text.substring(lastIndex), testId);
+                }
+            }
+            return result;
+        }
+
+        function renderMainContent() {
+            const currentTest = getActiveTest();
+            headerActiveTitle.textContent = currentTest.title;
+
+            const getBtnClass = (isActive, activeBg) => {
+                const color = activeBg.split('-')[1];
+                return isActive ? `${activeBg} text-white border-transparent` : `bg-white text-${color}-600 border-${color}-400 hover:bg-${color}-50`;
+            };
+
+            let html = `
+                <div class="flex flex-col mb-6 border-b border-slate-100 pb-5 print:mb-2 print:pb-2 print:border-b-2 print:border-black">
+                    <div class="flex justify-between items-start gap-4">
+                        <div>
+                            <span class="inline-block bg-indigo-50 text-indigo-700 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg mb-3 w-fit shadow-sm border border-indigo-100">
+                                ${currentTest.level} Module
+                            </span>
+                            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">${currentTest.title}</h2>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="window.exportToWord()" class="print-hidden bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 flex items-center gap-2 transition-transform active:scale-95">
+                                📄 Word出力
+                            </button>
+                            <button onclick="window.print()" class="print-hidden bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-slate-700 flex items-center gap-2 transition-transform active:scale-95">
+                                🖨️ A4印刷
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (currentTest.notes && currentTest.notes.length > 0) {
+                const tabTestClass = state.activeTab === 'test' ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50';
+                const tabNotesClass = state.activeTab === 'notes' ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50';
+                html += `
+                    <div class="print-hidden flex gap-2 mb-6 overflow-x-auto border-b-2 border-slate-100">
+                        <button onclick="window.switchTab('test')" class="px-5 py-3.5 font-bold text-sm transition-all whitespace-nowrap border-b-2 rounded-t-lg -mb-0.5 ${tabTestClass}">
+                            📝 読解テスト＆設問
+                        </button>
+                        <button onclick="window.switchTab('notes')" class="px-5 py-3.5 font-bold text-sm transition-all whitespace-nowrap border-b-2 rounded-t-lg -mb-0.5 ${tabNotesClass} flex items-center gap-2">
+                            💡 語句・文法ディープハイライト
+                        </button>
+                    </div>
+                `;
+            }
+
+            html += `<div class="${state.activeTab === 'test' ? 'block animate-fadeIn' : 'hidden'} print:block">`;
+            
+            if(currentTest.passage) {
+                html += `
+                    <div class="flex flex-col gap-3 mb-6 print-hidden bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm transition-all">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Grammar:</span>
+                                <button id="btn-verbs" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.verbsActive ? 'bg-blue-600 text-white border-transparent' : 'bg-white text-blue-600 border-blue-400 hover:bg-blue-50'}">動詞の語法</button>
+                                <button id="btn-idioms" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.idiomsActive ? 'bg-amber-600 text-white border-transparent' : 'bg-white text-amber-600 border-amber-400 hover:bg-amber-50'}">イディオム</button>
+                                <button id="btn-comparisons" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.comparisonsActive ? 'bg-emerald-600 text-white border-transparent' : 'bg-white text-emerald-600 border-emerald-400 hover:bg-emerald-50'}">比較</button>
+                                <button id="btn-modifiers" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.modifiersActive ? 'bg-teal-600 text-white border-transparent' : 'bg-white text-teal-600 border-teal-400 hover:bg-teal-50'}">代名詞・形容副詞</button>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Reading:</span>
+                                <button id="btn-slash" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.slashActive ? 'bg-purple-600 text-white border-transparent' : 'bg-white text-purple-600 border-purple-400 hover:bg-purple-50'}">/ スラッシュ</button>
+                                <button id="btn-trans" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.transActive ? 'bg-pink-600 text-white border-transparent' : 'bg-white text-pink-600 border-pink-400 hover:bg-pink-50'}">🇯🇵 直訳ルビ</button>
+                                <button id="btn-para" class="px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm ${state.paraActive ? 'bg-sky-600 text-white border-transparent' : 'bg-white text-sky-600 border-sky-400 hover:bg-sky-50'}">🔄 英語パラフレーズ</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-200 mt-1">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">Audio Assist:</span>
+                            <button id="btn-play-passage" class="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1.5 rounded-full hover:bg-indigo-700 transition shadow-sm text-[13px] font-bold ${isPlaying && !isPaused ? 'hidden' : ''}">▶️ 長文読上</button>
+                            <button id="btn-play-all" class="flex items-center gap-1 bg-violet-600 text-white px-3 py-1.5 rounded-full hover:bg-violet-700 transition shadow-sm text-[13px] font-bold ${isPlaying && !isPaused ? 'hidden' : ''}">${isPlaying && isPaused ? '▶️ 再開' : '▶️ 全文・設問読上'}</button>
+                            <button id="btn-pause" class="flex items-center gap-1 bg-amber-500 text-white px-3 py-1.5 rounded-full hover:bg-amber-600 transition shadow-sm text-[13px] font-bold ${isPlaying && !isPaused ? '' : 'hidden'}">⏸️ 一時停止</button>
+                            <button id="btn-stop" class="flex items-center gap-1 bg-rose-500 text-white px-3 py-1.5 rounded-full hover:bg-rose-600 transition shadow-sm text-[13px] font-bold ${isPlaying ? '' : 'hidden'}">⏹️ 停止</button>
+                            
+                            <div class="flex items-center gap-2 ml-auto">
+                                <label for="speed-slider" class="text-xs text-slate-600 font-bold">Speed:</label>
+                                <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="${state.tts.speed}" class="w-20 accent-indigo-600 cursor-pointer">
+                                <span id="speed-display" class="text-xs text-slate-600 font-mono font-bold w-8 text-right">${Number(state.tts.speed).toFixed(1)}x</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                html += `<div id="story-container" class="passage-container bg-white border border-slate-200 rounded-2xl p-6 md:p-8 mb-10 text-slate-700 shadow-sm transition-all duration-300 ${state.slashActive ? 'slash-mode-active' : ''} ${state.transActive ? 'translation-mode-active' : ''} ${state.paraActive ? 'paraphrase-mode-active' : ''}">`;
+                
+                const paragraphs = currentTest.passage.split('\n\n');
+                paragraphs.forEach(p => {
+                    html += `<p class="mb-5 text-[16px] leading-loose font-serif hover-readable" data-speak-type="passage">`;
+                    html += `<span class="spoken-content">${processTextWithHighlight(p, currentTest.id)}</span>`;
+                    html += `</p>`;
+                });
+                
+                html += `</div>`;
+            }
+
+            html += `<div id="questions-container" class="space-y-8 print:space-y-6">
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 mb-6">
+                            <span class="w-1.5 h-5 bg-indigo-500 rounded-full inline-block"></span> Questions
+                        </h3>`;
+            
+            const currentTestAnswers = state.userAnswers[state.selectedTestId] || {};
+
+            (currentTest.questions || []).forEach((qObj, qIdx) => {
+                const selectedOption = currentTestAnswers[qIdx];
+                html += `
+                    <div class="question-block bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all hover:border-indigo-200">
+                        <p class="q-text font-bold text-slate-900 mb-4 text-base md:text-lg leading-snug hover-readable" data-speak-type="question" data-speak-idx="${qIdx}">
+                            <span class="text-indigo-400 mr-1 not-spoken">Q${qIdx + 1}.</span> 
+                            <span class="spoken-content">${processTextWithHighlight(qObj.q, currentTest.id)}</span>
+                        </p>
+                        <div class="grid grid-cols-1 gap-3">
+                `;
+
+                qObj.options.forEach((opt, optIdx) => {
+                    let btnStyle = "bg-slate-50 border-slate-200 hover:border-indigo-300 hover:bg-white text-slate-700";
+                    let badgeStyle = "bg-white border border-slate-200 text-slate-500";
+                    
+                    if (selectedOption === optIdx) {
+                        btnStyle = "bg-indigo-50 border-indigo-400 text-indigo-900 font-bold ring-1 ring-indigo-400 shadow-sm";
+                        badgeStyle = "bg-indigo-500 border-indigo-500 text-white";
+                    }
+                    if (state.submitted) {
+                        if (optIdx === qObj.answer) {
+                            btnStyle = "bg-emerald-50 border-emerald-400 text-emerald-900 font-black shadow-sm ring-1 ring-emerald-400";
+                            badgeStyle = "bg-emerald-500 border-emerald-500 text-white";
+                        } else if (selectedOption === optIdx && selectedOption !== qObj.answer) {
+                            btnStyle = "bg-rose-50 border-rose-200 text-rose-500 line-through opacity-60";
+                            badgeStyle = "bg-rose-100 border-rose-200 text-rose-500";
+                        }
+                    }
+
+                    const disabledAttr = state.submitted ? 'disabled' : '';
+                    const cursorStyle = state.submitted ? 'cursor-default' : 'cursor-pointer';
+
+                    html += `
+                        <button onclick="window.handleSelectOption(${qIdx}, ${optIdx})" ${disabledAttr} class="opt-btn text-left p-4 rounded-xl border text-[14px] transition-all flex items-center gap-4 ${btnStyle} ${cursorStyle} hover-readable" data-speak-type="option" data-speak-idx="${optIdx}">
+                            <span class="not-spoken w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-colors ${badgeStyle}">
+                                ${String.fromCharCode(65 + optIdx)}
+                            </span>
+                            <span class="opt-text spoken-content flex-1">${processTextWithHighlight(opt, currentTest.id)}</span>
+                        </button>
+                    `;
+                });
+
+                html += `</div>`; 
+
+                if (state.submitted && qObj.explanation) {
+                    const isCorrect = selectedOption === qObj.answer;
+                    const expBg = isCorrect ? 'bg-emerald-50/80 border-emerald-200' : 'bg-amber-50/80 border-amber-200';
+                    const expText = isCorrect ? 'text-emerald-900' : 'text-amber-900';
+                    const icon = isCorrect ? '🎉 正解！' : '💡 ここがポイント';
+                    html += `
+                        <div class="mt-5 p-5 rounded-xl text-sm border shadow-inner ${expBg} ${expText} animate-fadeIn print:bg-transparent print:border-slate-400 print:text-black">
+                            <p class="font-black mb-2">${icon}</p>
+                            <p class="leading-relaxed">${qObj.explanation}</p>
+                        </div>
+                    `;
+                }
+                html += `</div>`; 
+            });
+
+            html += `</div>`;
+            html += `<div class="print-hidden mt-10 pt-8 border-t-2 border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">`;
+            if (!state.submitted) {
+                html += `<button onclick="window.submitAnswers()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-black px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5">Submit Answers & Grade</button>`;
+            } else {
+                const score = calculateScore();
+                const total = (currentTest.questions || []).length;
+                const isPerfect = score === total && total > 0;
+                html += `
+                    <div class="w-full flex flex-col sm:flex-row justify-between items-center bg-slate-800 p-6 rounded-2xl shadow-lg gap-6 animate-fadeIn">
+                        <div>
+                            <span class="text-white font-black text-2xl flex items-center gap-3">
+                                ${isPerfect ? '🏆 Perfect!' : '📊 Score:'} ${score} / ${total}
+                            </span>
+                            <p class="text-sm text-slate-300 mt-2">各問題の下にある解説を読んで復習しましょう。</p>
+                        </div>
+                        <button onclick="window.retryTest()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all w-full sm:w-auto">
+                            ↺ Try Again
+                        </button>
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+
+            if (currentTest.notes) {
+                html += `
+                    <div class="notes-section print:break-before-page ${state.activeTab === 'notes' ? 'block animate-fadeIn' : 'hidden'} print:block">
+                        <div class="bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl p-6 md:p-8 shadow-sm">
+                            <div class="mb-8 print:mb-4 notes-section-header">
+                                <h3 class="text-2xl font-black text-indigo-900 flex items-center gap-3 tracking-tight">
+                                    <span class="bg-indigo-600 text-white p-2 rounded-xl leading-none shadow-md print:hidden">💡</span> 語句・文法ディープハイライト
+                                </h3>
+                                <p class="text-slate-600 mt-3 font-medium text-[15px] leading-relaxed">
+                                    長文内に登場した重要構文の「専用辞書」です。文脈の中でどのように使われているか詳細な解説を確認しましょう。
+                                </p>
+                            </div>
+                            <div class="grid grid-cols-1 gap-8 print:gap-4 notes-grid">
+                `;
+
+                currentTest.notes.forEach(section => {
+                    html += `
+                        <div class="notes-section-block bg-white rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-200/60 transition-all hover:border-indigo-200">
+                            <h4 class="text-lg font-black text-indigo-800 mb-5 pb-3 border-b-2 border-slate-100 flex items-center gap-2">
+                                <span class="text-indigo-400">❖</span> ${section.title}
+                            </h4>
+                            <ul class="space-y-6 print:space-y-2">
+                    `;
+                    section.items.forEach(item => {
+                        const splitIndex = item.indexOf(':');
+                        let word = splitIndex !== -1 ? item.substring(0, splitIndex).trim() : item.trim();
+                        let meaning = splitIndex !== -1 ? item.substring(splitIndex + 1).trim() : '';
+                        const dictEntry = getDictionaryEntry(word);
+
+                        html += `
+                            <li class="border-b border-slate-50 pb-6 last:border-0 last:pb-0 group print:border-slate-200 print:pb-4">
+                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                    <span class="font-black text-slate-800 text-[17px] group-hover:text-indigo-600 transition-colors">${word}</span>
+                                    ${meaning ? `<span class="text-indigo-700 font-bold text-[13px] bg-indigo-50/80 px-3 py-1 rounded-md border border-indigo-100/50">${meaning}</span>` : ''}
+                                </div>
+                                ${dictEntry ? `
+                                    <div class="mt-3 text-[14.5px] text-slate-700 leading-relaxed bg-slate-50/70 p-5 rounded-xl border border-slate-200/60 shadow-inner">
+                                        <p class="mb-4 text-slate-800 border-l-4 border-amber-400 pl-3">
+                                            <span class="font-black text-amber-600 mr-1.5 block mb-1">📝 Point:</span> ${dictEntry.detail}
+                                        </p>
+                                        <div class="bg-white p-4 rounded-lg text-slate-600 border border-slate-200 shadow-sm flex flex-col gap-1.5">
+                                            <span class="font-black text-emerald-500">Ex.</span> <p class="leading-loose">${dictEntry.example}</p>
+                                        </div>
+                                    </div>
+                                ` : `<p class="text-[13px] text-slate-400 mt-1.5 font-medium pl-1">※文脈から意味を瞬時に取れるように復習しましょう。</p>`}
+                            </li>
+                        `;
+                    });
+                    html += `</ul></div>`;
+                });
+                html += `</div></div></div>`;
+            }
+
+            mainContentContainer.innerHTML = html;
+            attachToolListeners();
+            applyActiveHighlights();
+            attachHoverReadingListeners();
+        }
+
+        function attachToolListeners() {
+            const toggleBtn = (btnId, stateKey, activeClasses, inactiveClasses, itemClass) => {
+                const btn = document.getElementById(btnId);
+                if(!btn) return;
+                btn.onclick = () => {
+                    state[stateKey] = !state[stateKey];
+                    const isActive = state[stateKey];
+                    
+                    if (isActive) {
+                        inactiveClasses.forEach(c => btn.classList.remove(c));
+                        activeClasses.forEach(c => btn.classList.add(c));
+                        if (itemClass) document.querySelectorAll(itemClass).forEach(el => el.classList.add('active'));
+                    } else {
+                        activeClasses.forEach(c => btn.classList.remove(c));
+                        inactiveClasses.forEach(c => btn.classList.add(c));
+                        if (itemClass) document.querySelectorAll(itemClass).forEach(el => el.classList.remove('active'));
+                        if (itemClass) hideInfoPanel();
+                    }
+                    
+                    if (stateKey === 'slashActive') {
+                        const container = document.getElementById('story-container');
+                        if(isActive) container.classList.add('slash-mode-active');
+                        else container.classList.remove('slash-mode-active');
+                    }
+                };
+            };
+
+            toggleBtn('btn-verbs', 'verbsActive', ['bg-blue-600', 'text-white', 'border-transparent'], ['border-blue-400', 'text-blue-600', 'bg-white', 'hover:bg-blue-50'], '.hl-verbs');
+            toggleBtn('btn-idioms', 'idiomsActive', ['bg-amber-600', 'text-white', 'border-transparent'], ['border-amber-400', 'text-amber-600', 'bg-white', 'hover:bg-amber-50'], '.hl-idioms');
+            toggleBtn('btn-comparisons', 'comparisonsActive', ['bg-emerald-600', 'text-white', 'border-transparent'], ['border-emerald-400', 'text-emerald-600', 'bg-white', 'hover:bg-emerald-50'], '.hl-comparisons');
+            toggleBtn('btn-modifiers', 'modifiersActive', ['bg-teal-600', 'text-white', 'border-transparent'], ['border-teal-400', 'text-teal-600', 'bg-white', 'hover:bg-teal-50'], '.hl-modifiers');
+            toggleBtn('btn-slash', 'slashActive', ['bg-purple-600', 'text-white', 'border-transparent'], ['border-purple-400', 'text-purple-600', 'bg-white', 'hover:bg-purple-50'], null);
+            
+            const toggleMode = (btnId, stateKey, otherStateKey, activeClasses, inactiveClasses, modeClass, otherModeClass) => {
+                const btn = document.getElementById(btnId);
+                if(!btn) return;
+                btn.onclick = () => {
+                    state[stateKey] = !state[stateKey];
+                    if (state[stateKey] && otherStateKey) {
+                        state[otherStateKey] = false;
+                    }
+                    
+                    const container = document.getElementById('story-container');
+                    if (container) {
+                        if (state[stateKey]) {
+                            container.classList.add(modeClass);
+                            btn.classList.remove(...inactiveClasses);
+                            btn.classList.add(...activeClasses);
+                        } else {
+                            container.classList.remove(modeClass);
+                            btn.classList.remove(...activeClasses);
+                            btn.classList.add(...inactiveClasses);
+                        }
+                        
+                        if (otherStateKey) {
+                            const otherBtn = document.getElementById(otherStateKey === 'transActive' ? 'btn-trans' : 'btn-para');
+                            if (otherBtn) {
+                                container.classList.remove(otherModeClass);
+                                if (otherStateKey === 'transActive') {
+                                    otherBtn.className = "px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm bg-white text-pink-600 border-pink-400 hover:bg-pink-50";
+                                } else {
+                                    otherBtn.className = "px-3.5 py-1.5 rounded-full border-2 font-bold transition-all text-[13px] shadow-sm bg-white text-sky-600 border-sky-400 hover:bg-sky-50";
+                                }
+                            }
+                        }
+                    }
+                };
+            };
+            
+            toggleMode('btn-trans', 'transActive', 'paraActive', ['bg-pink-600', 'text-white', 'border-transparent'], ['border-pink-400', 'text-pink-600', 'bg-white', 'hover:bg-pink-50'], 'translation-mode-active', 'paraphrase-mode-active');
+            toggleMode('btn-para', 'paraActive', 'transActive', ['bg-sky-600', 'text-white', 'border-transparent'], ['border-sky-400', 'text-sky-600', 'bg-white', 'hover:bg-sky-50'], 'paraphrase-mode-active', 'translation-mode-active');
+
+            document.querySelectorAll('.grammar-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if(!item.classList.contains('active')) return;
+                    const description = item.getAttribute('data-desc');
+                    let title = ""; let colorClass = "";
+                    if (item.classList.contains('hl-verbs')) { title = "動詞の語法"; colorClass = "text-blue-400"; }
+                    else if (item.classList.contains('hl-idioms')) { title = "イディオム"; colorClass = "text-amber-400"; }
+                    else if (item.classList.contains('hl-comparisons')) { title = "比較"; colorClass = "text-emerald-400"; }
+                    else if (item.classList.contains('hl-modifiers')) { title = "代名詞・形容副詞"; colorClass = "text-teal-400"; }
+                    
+                    document.getElementById('info-title').className = `font-bold text-lg mb-1 ${colorClass}`;
+                    document.getElementById('info-title').textContent = title;
+                    document.getElementById('info-desc').innerHTML = description || "詳細情報はありません。";
+                    
+                    const panel = document.getElementById('info-panel');
+                    panel.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+                    panel.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+                    e.stopPropagation();
+                });
+            });
+
+            const speedSlider = document.getElementById('speed-slider');
+            const speedDisplay = document.getElementById('speed-display');
+            
+            const btnPlayPassage = document.getElementById('btn-play-passage');
+            const btnPlayAll = document.getElementById('btn-play-all');
+            const btnPause = document.getElementById('btn-pause');
+            const btnStop = document.getElementById('btn-stop');
+
+            if(speedSlider) {
+                speedSlider.addEventListener('input', (e) => {
+                    state.tts.speed = parseFloat(e.target.value);
+                    speedDisplay.textContent = state.tts.speed.toFixed(1) + 'x';
+                    if (currentUtterance) currentUtterance.rate = state.tts.speed;
+                });
+                
+                speedSlider.addEventListener('change', (e) => {
+                    if (synth && (synth.speaking || synth.pending)) {
+                        const wasPlaying = isPlaying;
+                        const wasPaused = isPaused;
+                        const currentIndex = currentQueueIndex;
+                        
+                        isPlaying = false; 
+                        synth.cancel();
+                        
+                        setTimeout(() => {
+                            currentQueueIndex = currentIndex;
+                            isPlaying = wasPlaying;
+                            isPaused = wasPaused;
+                            
+                            if (isPlaying && !isPaused) {
+                                speakNextInQueue();
+                            }
+                        }, 50);
+                    }
+                });
+            }
+
+            if(btnPlayPassage) btnPlayPassage.addEventListener('click', () => startPassageReading(true));
+            if(btnPlayAll) btnPlayAll.addEventListener('click', () => startPassageReading(false));
+            if(btnPause) btnPause.addEventListener('click', pauseText);
+            if(btnStop) btnStop.addEventListener('click', stopText);
+        }
+
+        function applyActiveHighlights() {
+            if (state.verbsActive) document.querySelectorAll('.hl-verbs').forEach(el => el.classList.add('active'));
+            if (state.idiomsActive) document.querySelectorAll('.hl-idioms').forEach(el => el.classList.add('active'));
+            if (state.comparisonsActive) document.querySelectorAll('.hl-comparisons').forEach(el => el.classList.add('active'));
+            if (state.modifiersActive) document.querySelectorAll('.hl-modifiers').forEach(el => el.classList.add('active'));
+        }
+
+        function hideInfoPanel() {
+            const panel = document.getElementById('info-panel');
+            if (panel) {
+                panel.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+                panel.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }
+        }
+
+        document.getElementById('close-panel').addEventListener('click', hideInfoPanel);
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('info-panel');
+            if (panel && !panel.contains(e.target) && !e.target.classList.contains('grammar-item')) {
+                hideInfoPanel();
+            }
+        });
+
+        let ttsQueue = [];
+        let currentQueueIndex = 0;
+        let isAutoReadingAll = false;
+        let currentHighlightEl = null;
+
+        function extractCleanText(el) {
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('rt, .slash, .not-spoken').forEach(e => e.remove());
+            return clone.textContent.replace(/\s+/g, ' ').trim();
+        }
+
+        // 読み上げ音声の最適化（質問番号・選択肢アルファベットの調整）
+        function preprocessTTS(text, type, idx) {
+            if (type === 'question') {
+                return `Question ${idx + 1}. ` + text;
+            } else if (type === 'option') {
+                const letter = String.fromCharCode(65 + idx);
+                // "A," とすることで、冠詞の a（ア）ではなくエイとして読ませる
+                return `${letter}, ` + text;
+            }
+            return text; 
+        }
+
+        function buildTTSQueue(passageOnly) {
+            ttsQueue = [];
+            document.querySelectorAll('.hover-readable[data-speak-type="passage"]').forEach(el => {
+                ttsQueue.push({ el: el, text: extractCleanText(el), type: 'passage' });
+            });
+            
+            if (!passageOnly) {
+                document.querySelectorAll('.question-block').forEach((qBlock, qIdx) => {
+                    const qEl = qBlock.querySelector('.hover-readable[data-speak-type="question"]');
+                    if (qEl) {
+                        ttsQueue.push({ el: qEl, text: preprocessTTS(extractCleanText(qEl), 'question', qIdx), type: 'question' });
+                    }
+                    qBlock.querySelectorAll('.hover-readable[data-speak-type="option"]').forEach((optBtn, optIdx) => {
+                         ttsQueue.push({ el: optBtn, text: preprocessTTS(extractCleanText(optBtn), 'option', optIdx), type: 'option' });
+                    });
+                });
+            }
+        }
+
+        function attachHoverReadingListeners() {
+            document.querySelectorAll('.hover-readable').forEach(el => {
+                el.addEventListener('mouseenter', (e) => {
+                    if (isPlaying) return; // 全体読み上げ中はホバー読み上げを無効化
+                    
+                    let textToSpeak = extractCleanText(el);
+                    const type = el.getAttribute('data-speak-type');
+                    const idx = parseInt(el.getAttribute('data-speak-idx'), 10) || 0;
+                    
+                    textToSpeak = preprocessTTS(textToSpeak, type, idx);
+                    
+                    if (textToSpeak && synth) {
+                        synth.cancel();
+                        let utterance = new SpeechSynthesisUtterance(textToSpeak);
+                        utterance.lang = 'en-US';
+                        if (englishVoice) utterance.voice = englishVoice;
+                        utterance.rate = state.tts.speed;
+                        
+                        el.classList.add('hover-reading-highlight');
+                        
+                        utterance.onend = () => el.classList.remove('hover-reading-highlight');
+                        utterance.onerror = () => el.classList.remove('hover-reading-highlight');
+                        
+                        synth.speak(utterance);
+                    }
+                });
+                
+                el.addEventListener('mouseleave', (e) => {
+                    if (isPlaying) return;
+                    if (synth) synth.cancel();
+                    el.classList.remove('hover-reading-highlight');
+                });
+            });
+        }
+
+        function updateTTSButtons() {
+            const btnPlayPassage = document.getElementById('btn-play-passage');
+            const btnPlayAll = document.getElementById('btn-play-all');
+            const btnPause = document.getElementById('btn-pause');
+            const btnStop = document.getElementById('btn-stop');
+            
+            if(!btnPlayPassage || !btnPlayAll) return;
+
+            if (isPlaying && !isPaused) {
+                btnPlayPassage.classList.add('hidden');
+                btnPlayAll.classList.add('hidden');
+                btnPause.classList.remove('hidden');
+                btnStop.classList.remove('hidden');
+            } else if (isPlaying && isPaused) {
+                btnPlayPassage.classList.add('hidden');
+                btnPlayAll.classList.remove('hidden');
+                btnPlayAll.innerHTML = '▶️ 再開';
+                btnPause.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            } else {
+                btnPlayPassage.classList.remove('hidden');
+                btnPlayPassage.innerHTML = '▶️ 長文読上';
+                btnPlayAll.classList.remove('hidden');
+                btnPlayAll.innerHTML = '▶️ 全文・設問読上';
+                btnPause.classList.add('hidden');
+                btnStop.classList.add('hidden');
+            }
+        }
+
+        window.startPassageReading = function(passageOnly) {
+            if (synth && synth.speaking && isPaused) {
+                synth.resume();
+                isPaused = false;
+                updateTTSButtons();
+                return;
+            }
+            
+            stopText();
+            isAutoReadingAll = !passageOnly;
+            isPlaying = true;
+            isPaused = false;
+            
+            buildTTSQueue(passageOnly);
+            currentQueueIndex = 0;
+            
+            updateTTSButtons();
+            speakNextInQueue();
+        };
+
+        function speakNextInQueue() {
+            if (currentQueueIndex >= ttsQueue.length) {
+                stopText();
+                return;
+            }
+            
+            const item = ttsQueue[currentQueueIndex];
+            const text = item.text;
+            
+            if (!text) {
+                currentQueueIndex++;
+                speakNextInQueue();
+                return;
+            }
+            
+            if (currentHighlightEl) {
+                currentHighlightEl.classList.remove('reading-highlight');
+            }
+            
+            item.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            item.el.classList.add('reading-highlight');
+            currentHighlightEl = item.el;
+            
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'en-US';
+            if (englishVoice) currentUtterance.voice = englishVoice;
+            currentUtterance.rate = state.tts.speed;
+            
+            currentUtterance.onend = () => {
+                if (isPlaying && !isPaused) {
+                    currentQueueIndex++;
+                    speakNextInQueue();
+                }
+            };
+            
+            currentUtterance.onerror = (e) => {
+                if(e.error !== 'canceled' && e.error !== 'interrupted') {
+                    console.error("Speech synthesis error", e);
+                    stopText();
+                }
+            };
+
+            if (synth) synth.speak(currentUtterance);
+        }
+
+        window.pauseText = function() {
+            if (synth && synth.speaking) {
+                synth.pause();
+                isPaused = true;
+                updateTTSButtons();
+            }
+        };
+
+        window.stopText = function() {
+            if (synth) synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            isAutoReadingAll = false;
+            currentQueueIndex = 0;
+            if (currentHighlightEl) {
+                currentHighlightEl.classList.remove('reading-highlight');
+                currentHighlightEl = null;
+            }
+            updateTTSButtons();
+        };
+
+        window.addEventListener('pagehide', stopText);
+        window.addEventListener('beforeunload', stopText);
+
+        function renderApp() {
+            renderSidebar();
+            renderMainContent();
+        }
+
+        document.addEventListener('DOMContentLoaded', renderApp);
+    </script>
+</body>
+</html>
